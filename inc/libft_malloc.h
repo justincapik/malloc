@@ -6,7 +6,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-# define PAGE_SIZE getpagesize()
+# define PAGE_SIZE (size_t)getpagesize()
+
+# define ALIGN16(x) ((x + 15) & ~15) // 15 pour le 01111
 
 # define TINY 128 // biggest size of a single variable ?
 # define SMALL (PAGE_SIZE / 8) // honestly kind of random
