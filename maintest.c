@@ -1,13 +1,20 @@
 #include "libft_malloc.h"
-#include "libmaster.h"
+//#include "libmaster.h"
+
+# define COUNT 5
 
 int 	main(void)
 {
-	write(2, "before\n", 7);
-	int	*test = (void *)malloc(sizeof(int));
-	write(2, "in-between\n", 11);
-	*test = 32;
-	free((void*)test);
-	printf("printf plz\n");
-	write(2, "after\n", 6);
+	int	*test[COUNT];
+
+	for (int i = 0; i < COUNT; ++i)	
+		test[i] = (void *)malloc(sizeof(int));
+
+	for (int i = 0; i < COUNT; ++i)	
+		*(test[i]) = 32;
+	
+	for (int i = 0; i < COUNT; ++i)	
+		free((void*)test[i]);
+
+	printf("pagesize = %d\n", PAGE_SIZE);
 }

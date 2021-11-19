@@ -10,14 +10,15 @@
 #                                                                              #
 # **************************************************************************** #
 
-NAME = libft_malloc.so
+NAME = libft_malloc_$(shell hostname).so
 SRC_DIR = ./src/
 OBJ_DIR = ./obj/
-SRC_NAME =	malloc.c\
-		free.c
+SRC_NAME =	malloc.c	\
+		free.c		\
+		global.c
 
-CC = gcc -g -Wall -Wextra -Werror -Wuninitialized -fPIC
-CFLAGS = -I ./inc/
+CC = gcc -g -Wall -Wextra -Werror -fPIC
+CFLAGS = -I ./inc/ -I ./libft/includes/
 
 SRCS = $(addprefix $(SRC_DIR), $(SRC_NAME))
 OBJ = $(addprefix $(OBJ_DIR), $(SRC_NAME:.c=.o))
