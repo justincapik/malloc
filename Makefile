@@ -1,45 +1,95 @@
-# **************************************************************************** #
+#******************************************************************************#
 #                                                                              #
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: kemartin <kemartin@student.42.fr>          +#+  +:+       +#+         #
+#    By: jucapik <marvin@42.fr>                     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2019/07/18 15:47:39 by kemartin          #+#    #+#              #
-#    Updated: 2021/02/18 15:34:13 by pharatyk         ###   ########.fr        #
+#    Created: 2019/01/04 13:09:58 by jucapik           #+#    #+#              #
+#    Updated: 2019/05/07 11:33:49 by jucapik          ###   ########.fr        #
 #                                                                              #
-# **************************************************************************** #
+#******************************************************************************#
 
-NAME = libft_malloc_$(shell hostname).so
-SRC_DIR = ./src/
-OBJ_DIR = ./obj/
-SRC_NAME =	malloc.c	\
-		free.c		\
-		global.c
+NAME		=	libft_malloc_$(shell hostname).so
 
-CC = gcc -g -Wall -Wextra -Werror -fPIC
-CFLAGS = -I ./inc/ -I ./libft/includes/
+CC			=	gcc -g 
 
-SRCS = $(addprefix $(SRC_DIR), $(SRC_NAME))
-OBJ = $(addprefix $(OBJ_DIR), $(SRC_NAME:.c=.o))
 
-$(NAME): $(OBJ)
-	@gcc $(OBJ) -shared -o $(NAME)
-	@printf " _/\nlibft  [done]\n"
+##
+##		FILE DESCRIPTOR
+##
 
-all: $(NAME)
+INCLUDE = inc libft
+
+SRC_PATH = src
+
+SRCS =	global.c	\
+	malloc.c	\
+	free.c		\
+	debug.c
+
+
+##
+##		SETTING VPATH
+##
+
+vpath %.c $(foreach dir, $(SRC_PATH), $(dir):)
+
+
+##
+##		DEPENDENCE DESCRIPTOR
+##
+
+IDEP = inc/libft_malloc.h
+
+OBJ_PATH = objs
+
+OBJS = $(addprefix $(OBJ_PATH)/, $(SRCS:.c=.o))
+
+
+##
+##		LIB DESCRIPTOR
+##
+
+LIBFT_PATH	=	libft
+LIBNAME		=	ft
+LIBPATH		=	$(LIBFT_PATH)
+LIBHEAD		=	$(LIBFT_PATH)
+
+
+##
+##		FLAGS CONSTRUCTION
+##
+
+CFLAGS += -Wall -Wextra -Werror
+
+IFLAGS = 	$(foreach dir, $(INCLUDE), -I$(dir) ) \
+
+LFLAGS =	$(foreach path, $(LIBPATH), -L$(path) ) \
+			$(foreach lib, $(LIBNAME), -l$(lib) ) \
+
+$(OBJ_PATH)/%.o:	%.c $(IDEP)
+	$(CC) -c $< -o $@ $(CFLAGS) $(IFLAGS) -fPIC
+
+
+all:		$(NAME)
+
+$(NAME):	$(OBJ_PATH) $(OBJS)
+	cd $(LIBPATH) && $(MAKE)
+	$(CC) -shared -o $(NAME) $(OBJS) $(CFLAGS) $(IFLAGS) $(LFLAGS)
 
 clean:
-	@rm -f $(OBJ)
+	make clean -C $(LIBFT_PATH)
+	rm -rf $(OBJ_PATH)
 
 fclean: clean
-	@rm -f $(NAME)
+	make fclean -C $(LIBFT_PATH)
+	rm -rf $(NAME)
 
-re: fclean all
+$(OBJ_PATH):
+	mkdir $(OBJ_PATH)
 
-$(OBJ_DIR)%.o : $(SRC_DIR)%.c
-	@mkdir -p $(OBJ_DIR)
-	@echo $<
-	@$(CC) -c $(CFLAGS) $< -o $@
+re:			fclean all
 
-.PHONY: all clean fclean re
+.SILENT:	all $(NAME) fclean clean re 
+.PHONY:		clean fclean re

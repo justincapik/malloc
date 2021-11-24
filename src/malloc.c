@@ -36,14 +36,16 @@ void	*updatestartaddr(char c)
 				return (NULL);
 
 			startaddrs_t	*sa = start;
-			sa->tiny_start = start + sizeof(startaddrs_t);
+			sa->tiny_start = (void*)start + ALIGN16(sizeof(startaddrs_t));
 			sa->small_start = NULL;
+			sa->next = start;
+			sa->first = sa->tiny_start;
 			startaddr = sa;
 
-			metadata	*md = sa->tiny_start + sizeof(startaddrs_t);
+			metadata	*md = sa->tiny_start;
 			md->next = sa->tiny_start;
 			md->size = 0;
-			md->pagem = sizeof(startaddrs_t);
+			md->zonest = ALIGN16(sizeof(startaddrs_t));
 			return (sa->tiny_start);
 		}
 		else if (c == 's')
@@ -56,14 +58,16 @@ void	*updatestartaddr(char c)
 				return (NULL);
 
 			startaddrs_t	*sa = start;
-			sa->small_start = start + sizeof(startaddrs_t);
+			sa->small_start = (void*)start + ALIGN16(sizeof(startaddrs_t));
 			sa->tiny_start = NULL;
+			sa->next = start;
+			sa->first = sa->small_start;
 			startaddr = sa;
 
-			metadata	*md = sa->small_start + sizeof(startaddrs_t);
+			metadata	*md = sa->small_start;
 			md->next = sa->small_start;
 			md->size = 0;
-			md->pagem = sizeof(startaddrs_t);
+			md->zonest = ALIGN16(sizeof(startaddrs_t));
 			return (sa->small_start);
 		}
 		else
@@ -84,10 +88,10 @@ void	*updatestartaddr(char c)
 		sa->small_start = startaddr->small_start;
 		startaddr = sa;
 
-		metadata	*md = sa->tiny_start + sizeof(startaddrs_t);
+		metadata	*md = sa->tiny_start;
 		md->next = sa->tiny_start;
 		md->size = 0;
-		md->pagem = sizeof(startaddrs_t);
+		md->zonest = ALIGN16(sizeof(startaddrs_t));
 		return (sa->tiny_start);
 	}
 	else if (startaddr->small_start == NULL && c == 's')
@@ -102,10 +106,10 @@ void	*updatestartaddr(char c)
 		sa->small_start = startaddr->small_start;
 		startaddr = sa;
 
-		metadata	*md = sa->small_start + sizeof(startaddrs_t);
+		metadata	*md = sa->small_start;
 		md->next = sa->small_start;
 		md->size = 0;
-		md->pagem = sizeof(startaddrs_t);
+		md->zonest = ALIGN16(sizeof(startaddrs_t));
 		return (sa->small_start);
 	}
 	else
@@ -115,58 +119,48 @@ void	*updatestartaddr(char c)
 	}
 }
 
-void	*malloc(size_t size)
+static void	*placeinmemory(long int size, void *heap_start) 
 {
-	void	*data_ptr = NULL;
+	write(2, "-1-\n", 4);
+	startaddrs_t	*sa = heap_start - ALIGN16(sizeof(startaddrs_t));
+	metadata	*cur = sa->first;
+	metadata	*prev = NULL;
+	//size_t		count = ALIGN16(sizeof(startaddrs_t)); TODO maybe later
+	void		*data_ptr = NULL;
 
-	printsa();
+	write(2, "-2-\n", 4);
+	
+	if ((size_t)(heap_start - (void*)sa->first) >= ALIGN16(sizeof(metadata)) + ALIGN16(size))
+		// verifie si il y a de la place avant le debut des bloques
+	{
+		cur->size = size;		
+		cur->zonest = ALIGN16(sizeof(startaddrs_t));
+		cur->next = sa->first;
+		sa->first = cur;
+		data_ptr = (void*)cur + ALIGN16(sizeof(metadata));
+		return (data_ptr);
+	}
 
-	if (size <= TINY)
-	{
-		write(2, "TINY ADDED\n", 11);
-		if (startaddr == NULL || startaddr->tiny_start == NULL)
-			updatestartaddr('t');
-	}
-	else if (size <= SMALL)
-	{
-		write(2, "SMALL ADDED\n", 12);
-		if (startaddr == NULL || startaddr->small_start == NULL)
-			updatestartaddr('s');
-	}
-	else if (size > 0) // LARGE
-	{
-		write(2, "NOPE\n", 5);
-		//return NULL;
-	}
-	else
-	{
-		write(2, "big NOPE\n", 9);
-		//return NULL;
-	}
-	//startaddr = NULL;
-	if ((data_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC,
-					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
-		return (NULL);
-	return (data_ptr);
-}
-
-void	*placeinmemory(size_t size, void *heap_start, int datasize) 
-{
-
-	metadat *cur = heap_start;
-	metadat *prev = NULL;
-	int count = sizeof(startaddr); //there's always the global vairable at the start of zones
-	while (!(cur->size == 0 || cur->size >= datasize) || cur->next == heap_start)
+	write(2, "-3-\n", 4);
+	//there's always the global vairable at the start of zones
+	while (!(cur->next == heap_start
+		|| ((void*)cur->next - (void*)cur
+				- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size)
+			> ALIGN16(size) + ALIGN16(sizeof(metadata)))))
 	// not sure about the condition here
 	{
-		count = count + ALIGN16(datasize) + ALIGN16(sizeof(metadata));
-		if (count >= PAGE_SIZE)
-			count = 0;
-		cur = cur->next;
 		prev = cur;
+		cur = cur->next;
 	}
+	printaddr((void*)((void*)cur->next - (void*)cur
+				- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size)));
+	write(2, "\n", 1);
+	printaddr((void*)((void*)cur->next - (void*)cur));
+	write(2, "\n", 1);
+	write(2, "-4-\n", 4);
 	if (cur->next == heap_start) //  on est arrive a la fin
 	{
+		/*
 		if (count == 0 && prev != NULL)
 			// on va depasser la page memoire et il faut en appeller une autre
 		{
@@ -180,26 +174,129 @@ void	*placeinmemory(size_t size, void *heap_start, int datasize)
 
 			cur->next = heap_start;
 			cur->size = size;
-			cur->pagem = count;
+			cur->zonest = count;
 		}
-		else if (prev != NULL) // just in the middle of a zone, and end of list
+		else */if (prev != NULL || (prev == NULL && cur->size != 0))
+			// just in the middle of a zone, and end of list
 		{
+			// check if you're not going over a page
+			write(2, "-5-\n", 4);
 			prev = cur;
-			cur = sizeof(cur) + datasize;
+			cur = (void*)cur + ALIGN16(sizeof(metadata)) + ALIGN16(size);
 			prev->next = cur;
 			cur->next = heap_start;
 			cur->size = size;
-			cur->pagem = count;
+			if (prev != NULL)
+				cur->zonest = prev->zonest + (void*)cur - (void*)prev;
+			else
+				cur->zonest = ALIGN16(sizeof(startaddrs_t))
+					+ (void*)cur - (void*)prev;
 		}
 		else // prev est NULL, c'est le premier appel pour un tiny
 		{
+			write(2, "-6-\n", 4);
 			cur->next = heap_start;
 			cur->size = size;		
-			cur->pagem = count;
+			cur->zonest = ALIGN16(sizeof(startaddrs_t));
+			startaddrs_t *sa = heap_start - ALIGN16(sizeof(startaddrs_t));
+			sa->first = cur;
+			ft_putnbr_fd(cur->zonest, 2);
 		}
 	}
-	else // on a trouve un trou
+	else // on a trouve un trou de la bonne taille
+	{
+	printaddr(prev);
+	write(2, "\n", 1);
+	printaddr(startaddr->tiny_start);
+	write(2, "\n", 1);
+	printaddr(cur);
+	write(2, "\n", 1);
+	printaddr(cur->next);
+	write(2, "\n", 1);
+		write(2, "-7-\n", 4);
+		cur = (void*)cur + ALIGN16(cur->size) + ALIGN16(sizeof(cur));
 		cur->size = size;
-	data_ptr = cur + ALIGN16(sizeof(cur));
+		cur->zonest = (size_t)(void*)prev
+			+ ALIGN16(sizeof(metadata)) + ALIGN16(prev->size);
+		cur->next = prev->next;
+		prev->next = cur;
+	}
+	write(2, "-8-\n", 4);
+	printaddr(startaddr->tiny_start);
+	write(2, "\n", 1);
+	printaddr(cur);
+	write(2, "\n", 1);
+	void	*test = startaddr;
+	printaddr((test));
+	write(2, "\n", 1);
+	printaddr((void*)((test - (void*)cur) * -1));
+	write(2, "\n", 1);
+	printaddr((void*)(cur->zonest));
+	write(2, "\n", 1);
+	printaddr((void*)(ALIGN16(sizeof(metadata))));
+	write(2, "\n", 1);
+	if (prev != NULL)
+	{
+		ft_putnbr_fd(prev->zonest, 2);
+		write(2, " + ", 3);
+	}
+	ft_putnbr_fd(ALIGN16(cur->size), 2);
+	write(2, " + ", 3);
+	ft_putnbr_fd(ALIGN16(sizeof(metadata)), 2);
+	write(2, " => ", 4);
+	ft_putnbr_fd(cur->zonest, 2);
+	write(2, "\n", 1);
+
+	data_ptr = (void*)cur + ALIGN16(sizeof(metadata));
+	printaddr(data_ptr);
+	write(2, "\n", 1);
+	return (data_ptr);
+}
+
+void	*malloc(size_t size)
+{
+	void	*data_ptr = NULL;
+
+	ft_putstr_fd("size => ", 2);
+	ft_putnbr(size);
+	ft_putstr("\n");
+
+	// do edge case if the user asks too much
+
+	printsa();
+
+	if (size <= TINY)
+	{
+		write(2, "TINY ADDED\n", 11);
+		if (startaddr == NULL || startaddr->tiny_start == NULL)
+			updatestartaddr('t');
+		data_ptr = placeinmemory(size, startaddr->tiny_start);
+	}
+	else if (size <= SMALL)
+	{
+		write(2, "SMALL ADDED\n", 12);
+		if (startaddr == NULL || startaddr->small_start == NULL)
+			updatestartaddr('s');
+		data_ptr = placeinmemory(size, startaddr->small_start);
+	}
+	else // LARGE
+	{
+		write(2, "LARGE ADDED\n", 5);
+		if ((data_ptr = mmap(NULL, ALIGNPS(size + ALIGN16(sizeof(metadata))),
+					PROT_READ | PROT_WRITE | PROT_EXEC,
+					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+			return (NULL);
+		metadata *meta = data_ptr;
+		meta->size = size;
+		meta->next = NULL;
+		meta->zonest = 0;
+		data_ptr += ALIGN16(sizeof(metadata));
+	}
+
+	/*	
+	if ((data_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+		return (NULL);
+	*/
 	return (data_ptr);
 }
