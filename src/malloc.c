@@ -121,15 +121,13 @@ void	*updatestartaddr(char c)
 
 static void	*placeinmemory(long int size, void *heap_start) 
 {
-	write(2, "-1-\n", 4);
 	startaddrs_t	*sa = heap_start - ALIGN16(sizeof(startaddrs_t));
 	metadata	*cur = sa->first;
 	metadata	*prev = NULL;
 	//size_t		count = ALIGN16(sizeof(startaddrs_t)); TODO maybe later
 	void		*data_ptr = NULL;
-
-	write(2, "-2-\n", 4);
 	
+	write(2, "-1-\n", 4);
 	if ((size_t)(heap_start - (void*)sa->first) >= ALIGN16(sizeof(metadata)) + ALIGN16(size))
 		// verifie si il y a de la place avant le debut des bloques
 	{
@@ -140,8 +138,8 @@ static void	*placeinmemory(long int size, void *heap_start)
 		data_ptr = (void*)cur + ALIGN16(sizeof(metadata));
 		return (data_ptr);
 	}
+	write(2, "-2-\n", 4);
 
-	write(2, "-3-\n", 4);
 	//there's always the global vairable at the start of zones
 	while (!(cur->next == heap_start
 		|| ((void*)cur->next - (void*)cur
@@ -152,14 +150,9 @@ static void	*placeinmemory(long int size, void *heap_start)
 		prev = cur;
 		cur = cur->next;
 	}
-	printaddr((void*)((void*)cur->next - (void*)cur
-				- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size)));
-	write(2, "\n", 1);
-	printaddr((void*)((void*)cur->next - (void*)cur));
-	write(2, "\n", 1);
-	write(2, "-4-\n", 4);
 	if (cur->next == heap_start) //  on est arrive a la fin
 	{
+		write(2, "-3-\n", 4);
 		/*
 		if (count == 0 && prev != NULL)
 			// on va depasser la page memoire et il faut en appeller une autre
@@ -179,8 +172,8 @@ static void	*placeinmemory(long int size, void *heap_start)
 		else */if (prev != NULL || (prev == NULL && cur->size != 0))
 			// just in the middle of a zone, and end of list
 		{
+		write(2, "-4-\n", 4);
 			// check if you're not going over a page
-			write(2, "-5-\n", 4);
 			prev = cur;
 			cur = (void*)cur + ALIGN16(sizeof(metadata)) + ALIGN16(size);
 			prev->next = cur;
@@ -194,26 +187,17 @@ static void	*placeinmemory(long int size, void *heap_start)
 		}
 		else // prev est NULL, c'est le premier appel pour un tiny
 		{
-			write(2, "-6-\n", 4);
+		write(2, "-5-\n", 4);
 			cur->next = heap_start;
 			cur->size = size;		
 			cur->zonest = ALIGN16(sizeof(startaddrs_t));
 			startaddrs_t *sa = heap_start - ALIGN16(sizeof(startaddrs_t));
 			sa->first = cur;
-			ft_putnbr_fd(cur->zonest, 2);
 		}
 	}
 	else // on a trouve un trou de la bonne taille
 	{
-	printaddr(prev);
-	write(2, "\n", 1);
-	printaddr(startaddr->tiny_start);
-	write(2, "\n", 1);
-	printaddr(cur);
-	write(2, "\n", 1);
-	printaddr(cur->next);
-	write(2, "\n", 1);
-		write(2, "-7-\n", 4);
+		write(2, "-6-\n", 4);
 		cur = (void*)cur + ALIGN16(cur->size) + ALIGN16(sizeof(cur));
 		cur->size = size;
 		cur->zonest = (size_t)(void*)prev
@@ -221,35 +205,9 @@ static void	*placeinmemory(long int size, void *heap_start)
 		cur->next = prev->next;
 		prev->next = cur;
 	}
-	write(2, "-8-\n", 4);
-	printaddr(startaddr->tiny_start);
-	write(2, "\n", 1);
-	printaddr(cur);
-	write(2, "\n", 1);
-	void	*test = startaddr;
-	printaddr((test));
-	write(2, "\n", 1);
-	printaddr((void*)((test - (void*)cur) * -1));
-	write(2, "\n", 1);
-	printaddr((void*)(cur->zonest));
-	write(2, "\n", 1);
-	printaddr((void*)(ALIGN16(sizeof(metadata))));
-	write(2, "\n", 1);
-	if (prev != NULL)
-	{
-		ft_putnbr_fd(prev->zonest, 2);
-		write(2, " + ", 3);
-	}
-	ft_putnbr_fd(ALIGN16(cur->size), 2);
-	write(2, " + ", 3);
-	ft_putnbr_fd(ALIGN16(sizeof(metadata)), 2);
-	write(2, " => ", 4);
-	ft_putnbr_fd(cur->zonest, 2);
-	write(2, "\n", 1);
 
+	write(2, "-7-\n", 4);
 	data_ptr = (void*)cur + ALIGN16(sizeof(metadata));
-	printaddr(data_ptr);
-	write(2, "\n", 1);
 	return (data_ptr);
 }
 
@@ -262,8 +220,6 @@ void	*malloc(size_t size)
 	ft_putstr("\n");
 
 	// do edge case if the user asks too much
-
-	printsa();
 
 	if (size <= TINY)
 	{
@@ -293,10 +249,7 @@ void	*malloc(size_t size)
 		data_ptr += ALIGN16(sizeof(metadata));
 	}
 
-	/*	
-	if ((data_ptr = mmap(NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC,
-					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
-		return (NULL);
-	*/
+	print_mem();
+
 	return (data_ptr);
 }

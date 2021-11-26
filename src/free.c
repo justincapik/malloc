@@ -2,58 +2,59 @@
 
 static void	delete_zone(startaddrs_t *sa)
 {
-	if (sa->next == sa) // last zone (tiny or small)
-	{
-		if (sa->tiny_start - ALIGN16(sizeof(startaddrs_t)) == sa
-				&& sa->small_start != NULL)
-			// deleting tiny and small exists
-		{
-			startaddr = (void*)sa->small_start
-				-  ALIGN16(sizeof(startaddrs_t));
-			startaddr->tiny_start = NULL;
-			if (munmap((void*)sa, TINY_ZONE_SIZE) == -1)
-				ft_putendl("Error: munmap failed");
-		}
-		else if (sa->small_start - ALIGN16(sizeof(startaddrs_t)) == sa
-				&& sa->tiny_start != NULL)
-			// deleting small and tiny exists
-		{
-			startaddr = (void*)sa->tiny_start
-				-  ALIGN16(sizeof(startaddrs_t));
-			startaddr->small_start = NULL;
-			if (munmap((void*)sa, SMALL_ZONE_SIZE) == -1)
-				ft_putendl("Error: munmap failed");
-		}
-		else if (sa->tiny_start - ALIGN16(sizeof(startaddrs_t)) == sa)
-			// deleting tiny and small doesn't exist
-		{
-			if (munmap((void*)sa, TINY_ZONE_SIZE) == -1)
-				ft_putendl("Error: munmap failed");
-		}
-		else if (sa->tiny_start - ALIGN16(sizeof(startaddrs_t)) == sa)
-			// deleting small and tiny doesn't exist
-		{
-			if (munmap((void*)sa, SMALL_ZONE_SIZE) == -1)
-				ft_putendl("Error: munmap failed");
-		}
-		
-	}
-	else
-	{
+	startaddrs_t	*tmp = sa->next;
+	size_t		size = 0;
 
-		
+	// no void* cast for tiny_start and small_start because they're already void*
+	while ((tmp != startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t)))
+			&& tmp != startaddr->small_start - ALIGN16(sizeof(startaddrs_t)))
+		tmp = tmp->next;
+	size = (tmp == startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t)))
+		? TINY_ZONE_SIZE : SMALL_ZONE_SIZE;
+	while (tmp->next != sa)
+		tmp = tmp->next;
+	if (sa->next == sa)
+		// we've been fooled it's been one zone all along
+	{
+		if (sa == startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t)))
+		{
+			startaddr = startaddr->small_start - ALIGN16(sizeof(startaddrs_t));
+			startaddr->tiny_start = NULL;
+		}
+		else if (sa == startaddr->small_start - ALIGN16(sizeof(startaddrs_t)))
+		{
+			startaddr = startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t));
+			startaddr->small_start = NULL;
+		}
 	}
+	else if (sa == startaddr /*&& sa->next != sa*/)
+		// the zone is the start of tiny or small
+	{
+		sa->next->tiny_start = startaddr->tiny_start;
+		sa->next->small_start = startaddr->small_start;
+		startaddr = sa->next;
+		// there might be bugs from how the startaddr variable is used?
+		// idk just make sure when you're creating zones
+		// it's not done yet right now idk how you're going to do it
+	}
+	tmp->next = sa->next;
+	if (munmap((void*)sa, size) == -1)
+		ft_putendl_fd("Error: munmap failed", 2);
 }
 
 void		free(void *ptr)
 {
+	print_mem();
+
 	ft_putstr_fd("freeing at ", 2);
 	printaddr(ptr);
 	ft_putstr_fd("\n", 2);
 
 	// what about double frees
+	// 	check in the metadata if size is not already set to zero or next == NULL
 	// check if metadata makes sense for no segfaults
 	// check if it's in a zone <=
+	// check if it's small or tiny and startaddr exists
 
 	metadata *meta = (void*)ptr - ALIGN16(sizeof(metadata));
 
@@ -74,17 +75,14 @@ void		free(void *ptr)
 			startaddrs_t	*san = (void*)meta->next - meta->next->zonest;
 			if (sa != san) // it's the last block in the zone
 			{
-				ft_putendl_fd("-wait");
-				if (sa == startaddr->tiny_zone - ALIGN16(sizeof(startaddrs_t))
-				|| sa == startaddr->small_zone - ALIGN16(sizeof(startaddrs_t)))
-					delete_zone(sa);
-				// link previous zone to the next one
-				// check if it's deleting original zone
-				// delete this zone
+				// don't care about the block
+				// just delete the zone and link it back
+				ft_putendl_fd("-wait", 2);
+				delete_zone(sa);
 			}
-			else // the first block in a filled or not zone
+			else // the first block in a filled or partly filled zone
 			{
-				ft_putendl_fd(" da");
+				ft_putendl_fd(" da", 2);
 				sa->first = meta->next;
 				meta->next = NULL;
 				meta->zonest = 0;
@@ -105,7 +103,7 @@ void		free(void *ptr)
 	{
 		write(2, "=4=\n", 4);
 		if (munmap((void*)meta, ALIGNPS(meta->size)) == -1)
-			write(2, "fuck i guess\n", 13);
+			ft_putendl_fd("Error: munmap failed", 2);
 		else
 			write(2, "ye\n", 3);
 	}

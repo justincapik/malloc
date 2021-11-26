@@ -32,7 +32,7 @@ struct		startaddrs_s
 {
 	void		*tiny_start;
 	void		*small_start;
-	void		*next;
+	startaddrs_t	*next;
 	metadata	*first;
 };
 
@@ -43,7 +43,9 @@ void	*realloc(void *ptr, size_t size);
 
 void	printaddr(void *p0);
 void	printhex(size_t nbr);
+void	print_mem(void);
 
-extern	startaddrs_t	*startaddr; 
+extern	startaddrs_t	*startaddr;
+// can and will be pointing to any zone, but it will be the right values
 
 #endif

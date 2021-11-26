@@ -3,7 +3,7 @@
 
 static void     write_char(char c)
 {
-        write(2, &c, 1);
+        write(2, &c, 2);
 }
 
 static char     hex_digit(int v) {
@@ -35,10 +35,18 @@ int 	main(void)
 	}
 
 	for (int i = 0; i < COUNT; ++i)	
-		*(test[i]) = 32;
+	{
+		*(test[i]) = 0xfffffff;
+	}
 	
 	free(test[0]);
+	free(test[1]);
+	
+	test[0] = (void *)malloc(sizeof(int));
+	
+	//free(test[0]);
 
+	
 	//for (int i = 0; i < COUNT; ++i)	
 	//	free((void*)test[i]);
 
@@ -54,6 +62,8 @@ int 	main(void)
 	*test3 = 3;
 	*test4 = 4;
 	*/
+
+	printaddr((void*)NULL - 16);
 
 	write(2, "pat\n", 5);
 }
