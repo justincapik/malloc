@@ -15,8 +15,8 @@
 # define TINY 128 // biggest size of a single variable ? NEED TO BE SMALLER THAN PAGESIZE
 # define SMALL 1024 // honestly kind of random
 
-# define TINY_ZONE_SIZE ALIGNPS(TINY * 100)
-# define SMALL_ZONE_SIZE ALIGNPS(SMALL * 100)
+# define TINY_ZONE_SIZE ALIGNPS(TINY * 128)
+# define SMALL_ZONE_SIZE ALIGNPS(SMALL * 128)
 
 typedef struct metadata metadata;
 struct		metadata

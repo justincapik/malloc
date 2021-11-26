@@ -81,37 +81,40 @@ static void	print_zone(int fd, startaddrs_t	*stsa)
 {
 	metadata	*meta = stsa->first;
 	startaddrs_t	*cursa = stsa;
-	ft_putstr_fd("\tNew Zone: ", fd);
-	printaddr(cursa);
-	ft_putstr_fd("\n", fd);
 	do
 	{
+		if (meta == cursa->first)
+		{
+			ft_putstr_fd("\tNew Zone: ", fd);
+			printaddr(cursa);
+			cursa = (void*)meta - meta->zonest;
+			ft_putstr_fd("\n", fd);
+		}
 		printaddr((void*)meta + ALIGN16(sizeof(metadata)));
-		ft_putstr_fd(" [", fd);
+		ft_putstr_fd("[", fd);
 		ft_putnbr_fd(meta->size, fd);
-		ft_putstr_fd("]: ", fd);
+		ft_putstr_fd("]:", fd);
+		if (meta->size >= 100)
+			ft_putstr_fd("\t", fd);
+		else	
+			ft_putstr_fd("\t\t", fd);
 		char	*mem = (void*)meta + ALIGN16(sizeof(metadata));
 		for(size_t i = 0; i < meta->size; ++i)
 		{
 			if ((*mem & 0xff) == 0)
-				ft_putstr_fd("00", 2);
+				ft_putstr_fd("00", fd);
 			else if ((*mem & 0xff) <= 0xf)
 			{
-				ft_putstr_fd("0", 2);
+				ft_putstr_fd("0", fd);
 			}
 			printhex((size_t)(*mem & 0xff));
 			++mem;
 			ft_putstr_fd(" ", fd);
+			if ((i + 1) % 16 == 0)
+				ft_putstr_fd("\n\t\t\t\t", fd);
 		}
 		ft_putstr_fd("\n", fd);
 		meta = meta->next;
-		if ((void*)meta - meta->zonest != cursa)
-		{
-			ft_putstr_fd("\tNew Zone: ", fd);
-			printaddr(cursa);
-			ft_putstr_fd("\n", fd);
-			cursa = (void*)meta - meta->zonest;
-		}
 	} while (meta != (void*)stsa + ALIGN16(sizeof(startaddrs_t)));
 }
 

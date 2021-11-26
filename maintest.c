@@ -27,28 +27,20 @@ void            printaddr(void* p0) {
 
 int 	main(void)
 {
-	int	*test[COUNT];
+	size_t	*test[COUNT];
 
 	for (int i = 0; i < COUNT; ++i)
 	{
-		test[i] = (void *)malloc(sizeof(int));
+		test[i] = (void *)malloc(100);
 	}
 
 	for (int i = 0; i < COUNT; ++i)	
 	{
-		*(test[i]) = 0xfffffff;
+		*(test[i]) = 0xffffffffffff;
 	}
 	
-	free(test[0]);
-	free(test[1]);
-	
-	test[0] = (void *)malloc(sizeof(int));
-	
-	//free(test[0]);
-
-	
-	//for (int i = 0; i < COUNT; ++i)	
-	//	free((void*)test[i]);
+	for (int i = COUNT - 1; i >= 0; --i)	
+		free(test[i]);
 
 	/*
 	//printf("pagesize = %d\n", PAGE_SIZE);
