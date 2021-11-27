@@ -39,8 +39,8 @@ int 	main(void)
 		*(test[i]) = 0xffffffffffff;
 	}
 	
-	for (int i = COUNT - 1; i >= 0; --i)	
-		free(test[i]);
+	//for (int i = COUNT - 1; i >= 0; --i)	
+	//	free(test[i]);
 
 	/*
 	//printf("pagesize = %d\n", PAGE_SIZE);

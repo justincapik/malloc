@@ -152,6 +152,6 @@ void		free(void *ptr)
 	   else
 	   write(2, "freed\n", 6);
 	 */
-	print_mem();
+	print_mem(false);
 
 }

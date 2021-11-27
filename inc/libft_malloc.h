@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "libft.h"
+#include <stdbool.h>
 
 # define PAGE_SIZE (size_t)getpagesize()
 
@@ -15,8 +16,8 @@
 # define TINY 128 // biggest size of a single variable ? NEED TO BE SMALLER THAN PAGESIZE
 # define SMALL 1024 // honestly kind of random
 
-# define TINY_ZONE_SIZE ALIGNPS(TINY * 128)
-# define SMALL_ZONE_SIZE ALIGNPS(SMALL * 128)
+# define TINY_ZONE_SIZE ALIGNPS(TINY * 4)
+# define SMALL_ZONE_SIZE ALIGNPS(SMALL * 4)
 
 typedef struct metadata metadata;
 struct		metadata
@@ -43,7 +44,7 @@ void	*realloc(void *ptr, size_t size);
 
 void	printaddr(void *p0);
 void	printhex(size_t nbr);
-void	print_mem(void);
+void	print_mem(bool showmem);
 
 extern	startaddrs_t	*startaddr;
 // can and will be pointing to any zone, but it will be the right values

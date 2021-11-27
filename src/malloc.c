@@ -89,7 +89,7 @@ void	*updatestartaddr(char c)
 						| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
 						| MAP_PRIVATE, -1, 0)) == MAP_FAILED)
 			return (NULL);
-		
+
 		startaddrs_t	*sa = start;
 		sa->tiny_start = (void*)sa + ALIGN16(sizeof(startaddrs_t));
 		sa->small_start = startaddr->small_start;
@@ -131,18 +131,52 @@ void	*updatestartaddr(char c)
 	}
 }
 
+static void	*create_new_zone(int size, void *heap_start, metadata *prev)
+{
+	void	*start = NULL;
+	size_t	zonesize = (heap_start == startaddr->tiny_start)
+			? TINY_ZONE_SIZE : SMALL_ZONE_SIZE;
+	
+	if ((start = mmap(NULL, zonesize, PROT_READ
+					| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
+					| MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+		return (NULL);
+	startaddrs_t *sa = start;
+	sa->tiny_start = startaddr->tiny_start;
+	sa->small_start = startaddr->small_start; // don't really need both of these but eh
+	sa->first = (void*)start + ALIGN16(sizeof(startaddrs_t));
+	startaddrs_t *saprev = (void*)prev - prev->zonest;
+	saprev->next = sa;
+	sa->next = saprev->next;
+	
+	
+	metadata *cur = (void*)start + ALIGN16(sizeof(startaddrs_t));
+	cur->next = prev->next;
+	cur->size = size;
+	cur->zonest = ALIGN16(sizeof(startaddrs_t));
+	prev->next = sa->first;
+
+	ft_putstr_fd("new zone => ", 2);
+	printaddr(start);
+	ft_putstr_fd("\n", 2);
+	printaddr(cur);
+	ft_putstr_fd("\n", 2);
+	
+	return ((void*)cur + ALIGN16(sizeof(metadata)));
+}
+
 static void	*placeinmemory(long int size, void *heap_start) 
 {
 	write(2, "-0-\n", 4);
 	startaddrs_t	*sa = heap_start - ALIGN16(sizeof(startaddrs_t));
 	metadata	*cur = sa->first;
 	metadata	*prev = NULL;
-	//size_t		count = ALIGN16(sizeof(startaddrs_t)); TODO maybe later
 	void		*data_ptr = NULL;
-	
+
 	write(2, "-1-\n", 4);
 	if (cur->size != 0 && cur->next != NULL // check if it's not after a zone initialization
-	&& (size_t)(heap_start - (void*)sa->first) >= ALIGN16(sizeof(metadata)) + ALIGN16(size))
+		&& (size_t)(heap_start - (void*)sa->first)
+		>= ALIGN16(sizeof(metadata)) + ALIGN16(size))
 		// verifie si il y a de la place avant le debut des bloques
 	{
 		cur = heap_start;
@@ -155,45 +189,49 @@ static void	*placeinmemory(long int size, void *heap_start)
 	}
 	write(2, "-2-\n", 4);
 
+	
+	printaddr((void*)cur->next - cur->next->zonest);
+	write(2, "\n", 1);
+	printaddr((void*)cur - cur->zonest);
+	write(2, "\n", 1);
+
 	//there's always the global vairable at the start of zones
 	while (!(cur->next == heap_start
-		|| ((void*)cur->next - (void*)cur
-				- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size)
-			>= ALIGN16(size) + ALIGN16(sizeof(metadata)))))
-	// not sure about the condition here
+				|| ((((void*)cur->next - (void*)cur
+					- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size)
+					>= ALIGN16(size) + ALIGN16(sizeof(metadata))))
+		&& (cur->next != heap_start
+			&& (void*)cur->next - cur->next->zonest != (void*)cur - cur->zonest))))
+		// WTF THIS CONDITION TODO
 	{
-		ft_putnbr_fd((void*)cur->next - (void*)cur
-				- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size), 2);
-		ft_putstr_fd(" -- ", 2);
-		ft_putnbr_fd(ALIGN16(size) + ALIGN16(sizeof(metadata)), 2);
-		ft_putstr_fd("\n", 2);
-
 		prev = cur;
 		cur = cur->next;
 	}
+
 	if (cur->next == heap_start) //  on est arrive a la fin
 	{
 		write(2, "-3-\n", 4);
-		/*
-		if (count == 0 && prev != NULL)
+		ft_putnbr_fd(cur->zonest, 2);
+		write(2, "\n", 1); 
+		ft_putnbr_fd(cur->zonest + cur->size + ALIGN16(sizeof(metadata))*2 + size, 2);
+		write(2, "\n", 1); 
+		ft_putnbr_fd(TINY_ZONE_SIZE, 2);
+		write(2, "\n", 1); 
+		if ((heap_start == startaddr->tiny_start
+			&& cur->zonest + ALIGN16(cur->size) + ALIGN16(sizeof(metadata))*2 + size
+				>= TINY_ZONE_SIZE)
+			|| (heap_start == startaddr->small_start
+			&& cur->zonest + ALIGN16(cur->size) + ALIGN16(sizeof(metadata))*2 + size
+				>= SMALL_ZONE_SIZE))
 			// on va depasser la page memoire et il faut en appeller une autre
 		{
-			void	*start = NULL;
-			if ((start = mmap(NULL, TINY_ZONE_SIZE, PROT_READ
-							| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
-							| MAP_PRIVATE, -1, 0)) == MAP_FAILED)
-				return (NULL);
-			cur->next = start;
-			cur = start;
-
-			cur->next = heap_start;
-			cur->size = size;
-			cur->zonest = count;
+			write(2, "-4-\n", 4);
+			data_ptr = create_new_zone(size, heap_start, cur);
 		}
-		else */if (prev != NULL || (prev == NULL && cur->size != 0))
+		else if (prev != NULL || (prev == NULL && cur->size != 0))
 			// just in the middle of a zone, and end of list
 		{
-		write(2, "-4-\n", 4);
+			write(2, "-5-\n", 4);
 			// check if you're not going over a page
 			prev = cur;
 			cur = (void*)cur + ALIGN16(sizeof(metadata)) + ALIGN16(size);
@@ -208,7 +246,7 @@ static void	*placeinmemory(long int size, void *heap_start)
 		}
 		else // prev est NULL, c'est le premier appel pour un tiny
 		{
-		write(2, "-5-\n", 4);
+			write(2, "-6-\n", 4);
 			cur->next = heap_start;
 			cur->size = size;		
 			cur->zonest = ALIGN16(sizeof(startaddrs_t));
@@ -218,17 +256,17 @@ static void	*placeinmemory(long int size, void *heap_start)
 	}
 	else // on a trouve un trou de la bonne taille
 	{
-		write(2, "-6-\n", 4);
+		write(2, "-7-\n", 4);
 		prev = cur;
 		cur = (void*)cur + ALIGN16(cur->size) + ALIGN16(sizeof(metadata));
 		cur->size = size;
 		cur->zonest = (size_t)(prev->zonest
-			+ ALIGN16(sizeof(metadata)) + ALIGN16(prev->size));
+				+ ALIGN16(sizeof(metadata)) + ALIGN16(prev->size));
 		cur->next = prev->next;
 		prev->next = cur;
 	}
 
-	write(2, "-7-\n", 4);
+	write(2, "-8-\n", 4);
 	data_ptr = (void*)cur + ALIGN16(sizeof(metadata));
 	return (data_ptr);
 }
@@ -261,8 +299,8 @@ void	*malloc(size_t size)
 	{
 		write(2, "LARGE ADDED\n", 5);
 		if ((data_ptr = mmap(NULL, ALIGNPS(size + ALIGN16(sizeof(metadata))),
-					PROT_READ | PROT_WRITE | PROT_EXEC,
-					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+						PROT_READ | PROT_WRITE | PROT_EXEC,
+						MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
 			return (NULL);
 		metadata *meta = data_ptr;
 		meta->size = size;
@@ -271,7 +309,7 @@ void	*malloc(size_t size)
 		data_ptr += ALIGN16(sizeof(metadata));
 	}
 
-	print_mem();
+	print_mem(false);
 
 	return (data_ptr);
 }
