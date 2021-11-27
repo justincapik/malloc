@@ -146,8 +146,8 @@ static void	*create_new_zone(int size, void *heap_start, metadata *prev)
 	sa->small_start = startaddr->small_start; // don't really need both of these but eh
 	sa->first = (void*)start + ALIGN16(sizeof(startaddrs_t));
 	startaddrs_t *saprev = (void*)prev - prev->zonest;
-	saprev->next = sa;
 	sa->next = saprev->next;
+	saprev->next = sa;
 	
 	
 	metadata *cur = (void*)start + ALIGN16(sizeof(startaddrs_t));
@@ -158,11 +158,13 @@ static void	*create_new_zone(int size, void *heap_start, metadata *prev)
 
 	ft_putstr_fd("new zone => ", 2);
 	printaddr(start);
-	ft_putstr_fd("\n", 2);
+	ft_putstr_fd("\ncur = ", 2);
 	printaddr(cur);
+	ft_putstr_fd("\nzonest = ", 2);
+	printhex(cur->zonest);
 	ft_putstr_fd("\n", 2);
 	
-	return ((void*)cur + ALIGN16(sizeof(metadata)));
+	return (cur);
 }
 
 static void	*placeinmemory(long int size, void *heap_start) 
@@ -189,19 +191,13 @@ static void	*placeinmemory(long int size, void *heap_start)
 	}
 	write(2, "-2-\n", 4);
 
-	
-	printaddr((void*)cur->next - cur->next->zonest);
-	write(2, "\n", 1);
-	printaddr((void*)cur - cur->zonest);
-	write(2, "\n", 1);
-
 	//there's always the global vairable at the start of zones
 	while (!(cur->next == heap_start
 				|| ((((void*)cur->next - (void*)cur
 					- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size)
 					>= ALIGN16(size) + ALIGN16(sizeof(metadata))))
 		&& (cur->next != heap_start
-			&& (void*)cur->next - cur->next->zonest != (void*)cur - cur->zonest))))
+			&& (void*)cur->next - cur->next->zonest == (void*)cur - cur->zonest))))
 		// WTF THIS CONDITION TODO
 	{
 		prev = cur;
@@ -226,7 +222,7 @@ static void	*placeinmemory(long int size, void *heap_start)
 			// on va depasser la page memoire et il faut en appeller une autre
 		{
 			write(2, "-4-\n", 4);
-			data_ptr = create_new_zone(size, heap_start, cur);
+			cur = create_new_zone(size, heap_start, cur);
 		}
 		else if (prev != NULL || (prev == NULL && cur->size != 0))
 			// just in the middle of a zone, and end of list
@@ -279,34 +275,41 @@ void	*malloc(size_t size)
 	ft_putnbr(size);
 	ft_putstr("\n");
 
-	// do edge case if the user asks too much
+	if (size == 0) // TODO if they ask too much too
+		return (NULL);
 
 	if (size <= TINY)
 	{
-		write(2, "TINY ADDED\n", 11);
 		if (startaddr == NULL || startaddr->tiny_start == NULL)
 			updatestartaddr('t');
 		data_ptr = placeinmemory(size, startaddr->tiny_start);
+		ft_putstr_fd("TINY ADDED (", 2);
+		printaddr(data_ptr);
+		ft_putstr_fd(")\n", 2);
 	}
 	else if (size <= SMALL)
 	{
-		write(2, "SMALL ADDED\n", 12);
 		if (startaddr == NULL || startaddr->small_start == NULL)
 			updatestartaddr('s');
 		data_ptr = placeinmemory(size, startaddr->small_start);
+		ft_putstr_fd("SMALL ADDED (", 2);
+		printaddr(data_ptr);
+		ft_putstr_fd(")\n", 2);
 	}
 	else // LARGE
 	{
-		write(2, "LARGE ADDED\n", 5);
 		if ((data_ptr = mmap(NULL, ALIGNPS(size + ALIGN16(sizeof(metadata))),
-						PROT_READ | PROT_WRITE | PROT_EXEC,
-						MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+					PROT_READ | PROT_WRITE | PROT_EXEC,
+					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
 			return (NULL);
 		metadata *meta = data_ptr;
 		meta->size = size;
 		meta->next = NULL;
 		meta->zonest = 0;
 		data_ptr += ALIGN16(sizeof(metadata));
+		ft_putstr_fd("LARGE ADDED (", 2);
+		printaddr(data_ptr);
+		ft_putstr_fd(")\n", 2);
 	}
 
 	print_mem(false);

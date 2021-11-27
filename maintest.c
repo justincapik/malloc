@@ -23,7 +23,7 @@ void            printaddr(void* p0) {
     }
 }
 
-# define COUNT 5
+# define COUNT 10
 
 int 	main(void)
 {
@@ -38,9 +38,12 @@ int 	main(void)
 	{
 		*(test[i]) = 0xffffffffffff;
 	}
+
+	free(test[9]);
+	test[9] = (void *)malloc(100);
 	
-	//for (int i = COUNT - 1; i >= 0; --i)	
-	//	free(test[i]);
+	for (int i = 0; i < COUNT; ++i)	
+		free(test[i]);
 
 	/*
 	//printf("pagesize = %d\n", PAGE_SIZE);
