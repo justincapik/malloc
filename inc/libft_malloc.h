@@ -42,9 +42,9 @@ void	*malloc(size_t size);
 void	free(void *ptr);
 void	*realloc(void *ptr, size_t size);
 
-void	printaddr(void *p0);
-void	printhex(size_t nbr);
-void	print_mem(bool showmem);
+void	printaddr(void *p0); // TODO keep inly in show_alloc_mem() later
+void	printhex(size_t nbr); // TODO 
+void	show_alloc_mem(bool showmem);
 
 extern	startaddrs_t	*startaddr;
 // can and will be pointing to any zone, but it will be the right values

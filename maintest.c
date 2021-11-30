@@ -39,11 +39,20 @@ int 	main(void)
 		*(test[i]) = 0xffffffffffff;
 	}
 
-	free(test[9]);
-	test[9] = (void *)malloc(100);
+	for (int j = 0; j < COUNT; ++j)
+	{
+		for (int i = j; i >= 0; --i)	
+			free(test[i]);
+		for (int i = j; i >= 0; --i)	
+			test[i] = (void*)malloc(100);
+		for (int i = j; i < COUNT; ++i)	
+			free(test[i]);
+		for (int i = j; i < COUNT; ++i)	
+			test[i] = (void*)malloc(100);
+	}
 	
-	for (int i = 0; i < COUNT; ++i)	
-		free(test[i]);
+	//for (int i = COUNT - 1; i >= 0; --i)	
+	//	free(test[i]);
 
 	/*
 	//printf("pagesize = %d\n", PAGE_SIZE);

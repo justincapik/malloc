@@ -147,7 +147,6 @@ static void	*create_new_zone(int size, void *heap_start, metadata *prev)
 	sa->first = (void*)start + ALIGN16(sizeof(startaddrs_t));
 	startaddrs_t *saprev = (void*)prev - prev->zonest;
 	sa->next = saprev->next;
-	saprev->next = sa;
 	
 	
 	metadata *cur = (void*)start + ALIGN16(sizeof(startaddrs_t));
@@ -158,11 +157,17 @@ static void	*create_new_zone(int size, void *heap_start, metadata *prev)
 
 	ft_putstr_fd("new zone => ", 2);
 	printaddr(start);
+	ft_putstr_fd("\nprev zone => ", 2);
+	printaddr(saprev);
+	ft_putstr_fd("\nprev next => ", 2);
+	printaddr(saprev->next);
 	ft_putstr_fd("\ncur = ", 2);
 	printaddr(cur);
-	ft_putstr_fd("\nzonest = ", 2);
-	printhex(cur->zonest);
+	ft_putstr_fd("\nprev = ", 2);
+	printaddr(prev);
 	ft_putstr_fd("\n", 2);
+	
+	saprev->next = sa;
 	
 	return (cur);
 }
@@ -312,7 +317,7 @@ void	*malloc(size_t size)
 		ft_putstr_fd(")\n", 2);
 	}
 
-	print_mem(false);
+	show_alloc_mem(false);
 
 	return (data_ptr);
 }

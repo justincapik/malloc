@@ -79,8 +79,6 @@ void		printhex(size_t nbr)
 
 static void	print_zone(int fd, bool showmem, startaddrs_t *stsa)
 {
-	printaddr(startaddr);	
-	write(2, "\n", 5);
 	metadata	*meta = stsa->first;
 	startaddrs_t	*cursa = stsa;
 	do
@@ -91,6 +89,8 @@ static void	print_zone(int fd, bool showmem, startaddrs_t *stsa)
 			printaddr(cursa);
 			ft_putstr_fd(" -- points to ", 2);
 			printaddr(cursa->next);
+			ft_putstr_fd(" ", 2);
+			printaddr(cursa->first);
 			ft_putstr_fd("\n", fd);
 		}
 		printaddr((void*)meta + ALIGN16(sizeof(metadata)));
@@ -130,11 +130,14 @@ static void	print_zone(int fd, bool showmem, startaddrs_t *stsa)
 		ft_putstr_fd("\n", fd);
 		meta = meta->next;
 		if (meta != (void*)stsa + ALIGN16(sizeof(startaddrs_t)))
+		{
 			cursa = (void*)meta - meta->zonest;
-	} while (meta != (void*)stsa + ALIGN16(sizeof(startaddrs_t)));
+		}
+	} while (meta != stsa->first
+		&& meta != (void*)stsa + ALIGN16(sizeof(startaddrs_t)));
 }
 
-void		print_mem(bool showmem)
+void		show_alloc_mem(bool showmem)
 {
 	int fd = 2;
 
