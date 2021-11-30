@@ -28,12 +28,10 @@ void	printsa()
 
 void	*updatestartaddr(char c)
 {
-	write(2, "FACK", 4);
 	if (startaddr == NULL)
 	{
 		if (c == 't')
 		{
-			write(2, "(1)\n", 4);
 			void	*start = NULL;
 			if ((start = mmap(NULL, TINY_ZONE_SIZE, PROT_READ
 							| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
@@ -55,7 +53,6 @@ void	*updatestartaddr(char c)
 		}
 		else if (c == 's')
 		{
-			write(2, "(2)\n", 4);
 			void	*start = NULL;
 			if ((start = mmap(NULL, SMALL_ZONE_SIZE, PROT_READ
 							| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
@@ -83,7 +80,6 @@ void	*updatestartaddr(char c)
 	}
 	else if (startaddr->tiny_start == NULL && c == 't')
 	{
-		write(2, "(3)\n", 4);
 		void *start = NULL;
 		if ((start = mmap(NULL, TINY_ZONE_SIZE, PROT_READ
 						| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
@@ -105,7 +101,6 @@ void	*updatestartaddr(char c)
 	}
 	else if (startaddr->small_start == NULL && c == 's')
 	{
-		write(2, "(4)\n", 4);
 		void *start = NULL;
 		if ((start = mmap(NULL, SMALL_ZONE_SIZE, PROT_READ
 						| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
@@ -154,19 +149,6 @@ static void	*create_new_zone(int size, void *heap_start, metadata *prev)
 	cur->size = size;
 	cur->zonest = ALIGN16(sizeof(startaddrs_t));
 	prev->next = sa->first;
-
-	ft_putstr_fd("new zone => ", 2);
-	printaddr(start);
-	ft_putstr_fd("\nprev zone => ", 2);
-	printaddr(saprev);
-	ft_putstr_fd("\nprev next => ", 2);
-	printaddr(saprev->next);
-	ft_putstr_fd("\ncur = ", 2);
-	printaddr(cur);
-	ft_putstr_fd("\nprev = ", 2);
-	printaddr(prev);
-	ft_putstr_fd("\n", 2);
-	
 	saprev->next = sa;
 	
 	return (cur);
@@ -174,13 +156,11 @@ static void	*create_new_zone(int size, void *heap_start, metadata *prev)
 
 static void	*placeinmemory(long int size, void *heap_start) 
 {
-	write(2, "-0-\n", 4);
 	startaddrs_t	*sa = heap_start - ALIGN16(sizeof(startaddrs_t));
 	metadata	*cur = sa->first;
 	metadata	*prev = NULL;
 	void		*data_ptr = NULL;
 
-	write(2, "-1-\n", 4);
 	if (cur->size != 0 && cur->next != NULL // check if it's not after a zone initialization
 		&& (size_t)(heap_start - (void*)sa->first)
 		>= ALIGN16(sizeof(metadata)) + ALIGN16(size))
@@ -194,8 +174,6 @@ static void	*placeinmemory(long int size, void *heap_start)
 		data_ptr = (void*)cur + ALIGN16(sizeof(metadata));
 		return (data_ptr);
 	}
-	write(2, "-2-\n", 4);
-
 	//there's always the global vairable at the start of zones
 	while (!(cur->next == heap_start
 				|| ((((void*)cur->next - (void*)cur
@@ -211,13 +189,6 @@ static void	*placeinmemory(long int size, void *heap_start)
 
 	if (cur->next == heap_start) //  on est arrive a la fin
 	{
-		write(2, "-3-\n", 4);
-		ft_putnbr_fd(cur->zonest, 2);
-		write(2, "\n", 1); 
-		ft_putnbr_fd(cur->zonest + cur->size + ALIGN16(sizeof(metadata))*2 + size, 2);
-		write(2, "\n", 1); 
-		ft_putnbr_fd(TINY_ZONE_SIZE, 2);
-		write(2, "\n", 1); 
 		if ((heap_start == startaddr->tiny_start
 			&& cur->zonest + ALIGN16(cur->size) + ALIGN16(sizeof(metadata))*2 + size
 				>= TINY_ZONE_SIZE)
@@ -226,16 +197,14 @@ static void	*placeinmemory(long int size, void *heap_start)
 				>= SMALL_ZONE_SIZE))
 			// on va depasser la page memoire et il faut en appeller une autre
 		{
-			write(2, "-4-\n", 4);
 			cur = create_new_zone(size, heap_start, cur);
 		}
 		else if (prev != NULL || (prev == NULL && cur->size != 0))
 			// just in the middle of a zone, and end of list
 		{
-			write(2, "-5-\n", 4);
 			// check if you're not going over a page
 			prev = cur;
-			cur = (void*)cur + ALIGN16(sizeof(metadata)) + ALIGN16(size);
+			cur = (void*)cur + ALIGN16(sizeof(metadata)) + ALIGN16(prev->size);
 			prev->next = cur;
 			cur->next = heap_start;
 			cur->size = size;
@@ -257,7 +226,6 @@ static void	*placeinmemory(long int size, void *heap_start)
 	}
 	else // on a trouve un trou de la bonne taille
 	{
-		write(2, "-7-\n", 4);
 		prev = cur;
 		cur = (void*)cur + ALIGN16(cur->size) + ALIGN16(sizeof(metadata));
 		cur->size = size;
@@ -267,7 +235,6 @@ static void	*placeinmemory(long int size, void *heap_start)
 		prev->next = cur;
 	}
 
-	write(2, "-8-\n", 4);
 	data_ptr = (void*)cur + ALIGN16(sizeof(metadata));
 	return (data_ptr);
 }
@@ -277,8 +244,8 @@ void	*malloc(size_t size)
 	void	*data_ptr = NULL;
 
 	ft_putstr_fd("size => ", 2);
-	ft_putnbr(size);
-	ft_putstr("\n");
+	ft_putnbr_fd(size, 2);
+	ft_putstr_fd(" --- ", 2);
 
 	if (size == 0) // TODO if they ask too much too
 		return (NULL);

@@ -26,6 +26,7 @@ SRC_PATH = src
 SRCS =	global.c	\
 	malloc.c	\
 	free.c		\
+	realloc.c	\
 	debug.c
 
 
