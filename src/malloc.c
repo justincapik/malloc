@@ -216,7 +216,6 @@ static void	*placeinmemory(long int size, void *heap_start)
 		}
 		else // prev est NULL, c'est le premier appel pour un tiny
 		{
-			write(2, "-6-\n", 4);
 			cur->next = heap_start;
 			cur->size = size;		
 			cur->zonest = ALIGN16(sizeof(startaddrs_t));
@@ -243,9 +242,11 @@ void	*malloc(size_t size)
 {
 	void	*data_ptr = NULL;
 
+	/*
 	ft_putstr_fd("size => ", 2);
 	ft_putnbr_fd(size, 2);
 	ft_putstr_fd(" --- ", 2);
+	*/
 
 	if (size == 0) // TODO if they ask too much too
 		return (NULL);
@@ -255,18 +256,22 @@ void	*malloc(size_t size)
 		if (startaddr == NULL || startaddr->tiny_start == NULL)
 			updatestartaddr('t');
 		data_ptr = placeinmemory(size, startaddr->tiny_start);
+		/*
 		ft_putstr_fd("TINY ADDED (", 2);
 		printaddr(data_ptr);
 		ft_putstr_fd(")\n", 2);
+		*/
 	}
 	else if (size <= SMALL)
 	{
 		if (startaddr == NULL || startaddr->small_start == NULL)
 			updatestartaddr('s');
 		data_ptr = placeinmemory(size, startaddr->small_start);
+		/*
 		ft_putstr_fd("SMALL ADDED (", 2);
 		printaddr(data_ptr);
 		ft_putstr_fd(")\n", 2);
+		*/
 	}
 	else // LARGE
 	{
@@ -279,12 +284,14 @@ void	*malloc(size_t size)
 		meta->next = NULL;
 		meta->zonest = 0;
 		data_ptr += ALIGN16(sizeof(metadata));
+		/*
 		ft_putstr_fd("LARGE ADDED (", 2);
 		printaddr(data_ptr);
 		ft_putstr_fd(")\n", 2);
+		*/
 	}
 
-	show_alloc_mem(false);
+	//show_alloc_mem(false);
 
 	return (data_ptr);
 }

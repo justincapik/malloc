@@ -27,6 +27,8 @@ SRCS =	global.c	\
 	malloc.c	\
 	free.c		\
 	realloc.c	\
+	calloc.c	\
+	reallocarray.c	\
 	debug.c
 
 

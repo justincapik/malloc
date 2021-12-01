@@ -78,9 +78,11 @@ static void	delete_zone(startaddrs_t *sa, metadata *cur)
 
 void		free(void *ptr)
 {
+	/*
 	ft_putstr_fd("freeing at ", 2);
 	printaddr(ptr);
 	ft_putstr_fd("\n", 2);
+	*/
 
 	// TODO
 	// check from metdatasize which zone (tiny, small, large), and then
@@ -93,7 +95,7 @@ void		free(void *ptr)
 		return ;
 	if (meta->size == 0 || meta->next == NULL)
 	{
-		ft_putstr_fd("Warning: double free\n", 2);
+		//ft_putstr_fd("Warning: double free\n", 2);
 		return ;
 	}
 
@@ -152,7 +154,6 @@ void		free(void *ptr)
 			while (prev->next != meta)
 				prev = prev->next;
 			prev->next = meta->next;
-			printaddr(sa->first);
 			meta->next = NULL;
 			meta->zonest = 0;
 		}
@@ -178,6 +179,6 @@ void		free(void *ptr)
 	   else
 	   write(2, "freed\n", 6);
 	 */
-	show_alloc_mem(false);
+	//show_alloc_mem(false);
 
 }

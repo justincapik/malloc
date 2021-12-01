@@ -11,13 +11,14 @@
 # define PAGE_SIZE (size_t)getpagesize()
 
 # define ALIGN16(x) ((x + 15) & ~15) // 15 pour le 01111
-# define ALIGNPS(x) ((x + PAGE_SIZE) & ~PAGE_SIZE) // only works if pagesize is a power of 2
+# define ALIGNPS(x) ((x + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1))
+	// only works if pagesize is a power of 2
 
 # define TINY 128 // biggest size of a single variable ? NEED TO BE SMALLER THAN PAGESIZE
 # define SMALL 1024 // honestly kind of random
 
-# define TINY_ZONE_SIZE ALIGNPS(TINY * 4)
-# define SMALL_ZONE_SIZE ALIGNPS(SMALL * 4)
+# define TINY_ZONE_SIZE ALIGNPS(TINY * 100)
+# define SMALL_ZONE_SIZE ALIGNPS(SMALL * 100)
 
 typedef struct metadata metadata;
 struct		metadata
@@ -41,6 +42,8 @@ struct		startaddrs_s
 void	*malloc(size_t size);
 void	free(void *ptr);
 void	*realloc(void *ptr, size_t size);
+void	*calloc(size_t nmemb, size_t size);
+void	*reallocarray(void *ptr, size_t nmemb, size_t size);
 
 void	printaddr(void *p0); // TODO keep inly in show_alloc_mem() later
 void	printhex(size_t nbr); // TODO 
