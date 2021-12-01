@@ -10,7 +10,7 @@ void	*realloc(void *ptr, size_t size)
 	ft_putnbr_fd(size, 2);
 	write(2, "\n", 1);
 	*/
-
+	
 	metadata	*meta = ptr - ALIGN16(sizeof(metadata));
 	void		*data_ptr = NULL;
 
@@ -32,10 +32,9 @@ void	*realloc(void *ptr, size_t size)
 	else
 	{
 		data_ptr = malloc(size);
-		ft_memcpy(data_ptr, ptr, size);
+		ft_memcpy(data_ptr, ptr, meta->size);
 		free(ptr);
 	}
 	
-	//show_alloc_mem(false);
 	return (data_ptr);
 }

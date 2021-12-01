@@ -25,7 +25,6 @@ void	printsa()
 	}
 }
 
-
 void	*updatestartaddr(char c)
 {
 	if (startaddr == NULL)

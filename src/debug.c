@@ -137,9 +137,10 @@ static void	print_zone(int fd, bool showmem, startaddrs_t *stsa)
 		&& meta != (void*)stsa + ALIGN16(sizeof(startaddrs_t)));
 }
 
-void		show_alloc_mem(bool showmem)
+void		show_alloc_mem(void)
 {
 	int fd = 2;
+	bool showmem = false;
 
 	if (startaddr == NULL)
 	{

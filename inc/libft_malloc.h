@@ -34,6 +34,7 @@ struct		startaddrs_s
 {
 	void		*tiny_start;
 	void		*small_start;
+	void		*large_start;
 	startaddrs_t	*next;
 	metadata	*first;
 };
@@ -47,7 +48,7 @@ void	*reallocarray(void *ptr, size_t nmemb, size_t size);
 
 void	printaddr(void *p0); // TODO keep inly in show_alloc_mem() later
 void	printhex(size_t nbr); // TODO 
-void	show_alloc_mem(bool showmem);
+void	show_alloc_mem();
 
 extern	startaddrs_t	*startaddr;
 // can and will be pointing to any zone, but it will be the right values
