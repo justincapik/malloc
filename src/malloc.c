@@ -163,6 +163,10 @@ static bool	check_size(size_t size)
 {
 	struct rlimit lim;
 	
+	if (getrlimit(RLIMIT_DATA, &lim) != 0)
+		return (false);
+	if (size > lim.rlim_cur)
+		return (false);
 	if (getrlimit(RLIMIT_AS, &lim) != 0)
 		return (false);
 	if (size > lim.rlim_cur)
@@ -178,7 +182,7 @@ void	*malloc(size_t size)
 	/*
 	   ft_putstr_fd("size => ", 2);
 	   ft_putnbr_fd(size, 2);
-	   ft_putstr_fd(" --- ", 2);
+	   ft_putstr_fd("\n", 2);
 	*/
 
 	if (size == 0) // TODO if they ask too much too
@@ -239,7 +243,7 @@ void	*malloc(size_t size)
 		*/
 	}
 
-	//show_alloc_mem(false);
+	//show_alloc_mem();
 
 	return (data_ptr);
 }
