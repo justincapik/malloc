@@ -29,6 +29,7 @@ int 	main(void)
 {
 	size_t	*test[COUNT];
 
+	/*
 	for (int i = 0; i < COUNT; ++i)
 	{
 		test[i] = (void *)malloc(100);
@@ -51,8 +52,16 @@ int 	main(void)
 			test[i] = (void*)malloc(100);
 	}
 	
-	//for (int i = COUNT - 1; i >= 0; --i)	
-	//	free(test[i]);
+	for (int i = COUNT - 1; i >= 0; --i)	
+		free(test[i]);
+	*/
+
+	for (int i = 0; i < COUNT; ++i)
+	{
+		test[i] = (void *)malloc(10000);
+	}
+	for (int i = COUNT - 1; i >= 0; --i)	
+		free(test[i]);
 
 	/*
 	//printf("pagesize = %d\n", PAGE_SIZE);

@@ -81,7 +81,8 @@ static void	print_zone(int fd, bool showmem, startaddrs_t *stsa)
 {
 	metadata	*meta = stsa->first;
 	startaddrs_t	*cursa = stsa;
-	do
+
+	do	
 	{
 		if (meta == cursa->first)
 		{
@@ -133,8 +134,51 @@ static void	print_zone(int fd, bool showmem, startaddrs_t *stsa)
 		{
 			cursa = (void*)meta - meta->zonest;
 		}
-	} while (meta != stsa->first
+	} while (meta != stsa->first && meta->size != 0
 		&& meta != (void*)stsa + ALIGN16(sizeof(startaddrs_t)));
+}
+
+void		print_large(int fd, bool showmem, metadata *meta)
+{
+	while (meta != NULL)
+	{
+		printaddr((void*)meta + ALIGN16(sizeof(metadata)));
+		ft_putstr_fd("[", fd);
+		ft_putnbr_fd(meta->size, fd);
+		ft_putstr_fd("]:", fd);
+		if (meta->size >= 100)
+			ft_putstr_fd("\t", fd);
+		else	
+			ft_putstr_fd("\t\t", fd);
+		char	*mem = (void*)meta + ALIGN16(sizeof(metadata));
+		if (showmem == true)
+		{
+			for(size_t i = 0; i < meta->size; ++i)
+			{
+				if ((*mem & 0xff) == 0)
+					ft_putstr_fd("00", fd);
+				else if ((*mem & 0xff) <= 0xf)
+				{
+					ft_putstr_fd("0", fd);
+				}
+				printhex((size_t)(*mem & 0xff));
+				++mem;
+				ft_putstr_fd(" ", fd);
+				if ((i + 1) % 16 == 0)
+					ft_putstr_fd("\n\t\t\t\t", fd);
+			}
+		}
+		else
+		{
+			ft_putstr_fd(" [-0x", fd);
+			printhex(meta->zonest); 
+			ft_putstr_fd("] (", fd);
+			printaddr(meta->next);
+			ft_putstr_fd(")", fd);
+		}
+		ft_putstr_fd("\n", fd);
+		meta = meta->next;
+	}
 }
 
 void		show_alloc_mem(void)
@@ -151,19 +195,34 @@ void		show_alloc_mem(void)
 		"[========================End Print Memory=====================]\n", fd);
 		return;
 	}
-
+	
 	ft_putstr_fd("\n[=========================Print Memory========================]\n", fd);
+	
+	startaddrs_t	*sa = startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t));
+	metadata	*meta = sa->first;
+	
 	ft_putstr_fd("\t\tTiny Zone:\n", fd);
-	if (startaddr->tiny_start != NULL)
+	if (meta->size != 0)
 		print_zone(2, showmem,
 				(void*)startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t)));
 	else
 		ft_putstr_fd("Empty\n", 2);
+	
+	sa = startaddr->small_start - ALIGN16(sizeof(startaddrs_t));
+	meta = sa->first;
 
 	ft_putstr_fd("\n\t\tSmall Zone:\n", fd);
-	if (startaddr->small_start != NULL)
+	if (meta->size != 0)
 		print_zone(2, showmem,
 				(void*)startaddr->small_start - ALIGN16(sizeof(startaddrs_t)));
+	else
+		ft_putstr_fd("Empty\n", 2);
+	
+	meta = startaddr->large_start;
+
+	ft_putstr_fd("\n\t\tLarge Zone:\n", fd);
+	if (meta != NULL)
+		print_large(2, showmem, startaddr->large_start);
 	else
 		ft_putstr_fd("Empty\n", 2);
 

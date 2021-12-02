@@ -1,6 +1,6 @@
 #include "libft_malloc.h"
 
-static void	delete_zone(startaddrs_t *sa, metadata *cur)
+static void		delete_zone(startaddrs_t *sa, metadata *cur)
 {
 	startaddrs_t	*tmp = sa->next;
 	size_t		size = 0;
@@ -17,28 +17,12 @@ static void	delete_zone(startaddrs_t *sa, metadata *cur)
 	if (sa->next == sa)
 		// we've been fooled it's been one zone all along
 	{
-		if (sa == startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t)))
-		{
-			if (startaddr->small_start != NULL)
-			{
-				startaddr = startaddr->small_start
-					- ALIGN16(sizeof(startaddrs_t));
-				startaddr->tiny_start = NULL;
-			}
-			else
-				startaddr = NULL;
-		}
-		else if (sa == startaddr->small_start - ALIGN16(sizeof(startaddrs_t)))
-		{
-			if (startaddr->tiny_start != NULL)
-			{
-				startaddr = startaddr->tiny_start
-					- ALIGN16(sizeof(startaddrs_t));
-				startaddr->small_start = NULL;
-			}
-			else
-				startaddr = NULL;
-		}
+			sa->first = (void*)sa + ALIGN16(sizeof(startaddrs_t));
+		
+			metadata	*md = (void*)sa + ALIGN16(sizeof(startaddrs_t));
+			md->next = (void*)sa + ALIGN16(sizeof(startaddrs_t));
+			md->size = 0;
+			md->zonest = ALIGN16(sizeof(startaddrs_t));
 	}
 	else // multiple zones
 	{
@@ -53,6 +37,7 @@ static void	delete_zone(startaddrs_t *sa, metadata *cur)
 		{
 			sa->next->tiny_start = (void*)sa->next + ALIGN16(sizeof(startaddrs_t));
 			sa->next->small_start = startaddr->small_start;
+			sa->next->large_start = startaddr->large_start;
 			startaddr = sa->next;
 			prev->next = startaddr->tiny_start;
 		}
@@ -61,19 +46,55 @@ static void	delete_zone(startaddrs_t *sa, metadata *cur)
 		{
 			sa->next->tiny_start = startaddr->tiny_start;
 			sa->next->small_start = (void*)sa->next + ALIGN16(sizeof(startaddrs_t));
+			sa->next->large_start = startaddr->large_start;
 			startaddr = sa->next;
 			prev->next = startaddr->small_start;
 		}
-		else
+		else // zone in the middle of somewhere
 		{
 			// add zone->next update
 			prev->next = prev->next->next;
 		}
 	
+		tmp->next = sa->next;
+		if (munmap((void*)sa, size) == -1)
+			ft_putendl_fd("Error: munmap failed", 2);
 	}
-	tmp->next = sa->next;
-	if (munmap((void*)sa, size) == -1)
-		ft_putendl_fd("Error: munmap failed", 2);
+}
+
+static bool		check_ptr(void *ptr)
+{
+	startaddrs_t	*sa = startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t));
+	metadata *meta = sa->first;
+
+	do
+	{
+		if ((void*)meta + ALIGN16(sizeof(metadata)) == ptr)
+			return (true);
+		meta = meta->next;
+	}
+	while (meta != (void*)sa + ALIGN16(sizeof(startaddrs_t)));
+	
+	sa = startaddr->small_start - ALIGN16(sizeof(startaddrs_t));
+	meta = sa->first;
+
+	do
+	{
+		if ((void*)meta + ALIGN16(sizeof(metadata)) == ptr)
+			return (true);
+		meta = meta->next;
+	}
+	while (meta != (void*)sa + ALIGN16(sizeof(startaddrs_t)));
+
+	meta = startaddr->large_start;
+	while (meta != NULL)
+	{
+		if ((void*)meta + ALIGN16(sizeof(metadata)) == ptr)
+			return (true);
+		meta = meta->next;
+	}
+	
+	return (false);
 }
 
 void		free(void *ptr)
@@ -84,30 +105,31 @@ void		free(void *ptr)
 	ft_putstr_fd("\n", 2);
 	*/
 
-	// TODO
-	// check from metdatasize which zone (tiny, small, large), and then
-	// if the pointer is in the zone
-	// throw error or smtg if it's not
-	
-	metadata *meta = (void*)ptr - ALIGN16(sizeof(metadata));
-
 	if (ptr == NULL)
 		return ;
-	if (meta->size == 0 || meta->next == NULL)
+	if (check_ptr(ptr) == false)
 	{
-		//ft_putstr_fd("Warning: double free\n", 2);
+		/*
+		show_alloc_mem(false);
+		ft_putstr_fd("freeing at ", 2);
+		printaddr(ptr);
+		ft_putstr_fd("\n", 2);
+		*/
+		ft_putstr_fd("Error: invalide pointer given to free\n", 2);
+		return ;
+	}
+	
+	metadata *meta = (void*)ptr - ALIGN16(sizeof(metadata));
+	if (meta->size == 0 && meta->next == NULL) // never actually used
+	{
+		ft_putstr_fd("Warning: double free\n", 2);
 		return ;
 	}
 
 	if (meta->size <= SMALL) // for small and tiny
 	{
-		// ALSO FREE PAGE EVEN if we're not on the first one
-		// check if it's a zone we have at all
-
 		startaddrs_t	*sa = (void*)meta - meta->zonest;
 		metadata	*prev = sa->first;
-		// todo check if start of a zone and check if last of a zone
-		
 		if (sa->first == meta) // check if it's the first one in a zone
 		{
 			startaddrs_t	*san = (void*)meta->next - meta->next->zonest;
@@ -167,10 +189,25 @@ void		free(void *ptr)
 		}
 
 	}
-	else
+	else // LARGE
 	{
-		if (munmap((void*)meta, ALIGNPS(meta->size)) == -1)
-			ft_putendl_fd("Error: munmap failed", 2);
+		metadata *tmp = startaddr->large_start;
+		while (tmp != NULL && tmp->next != meta && tmp->next != NULL && tmp != meta)
+			tmp = tmp->next;
+		if (tmp->next == meta)
+		{
+			tmp->next = meta->next;
+			if (munmap((void*)meta, ALIGNPS(meta->size)) == -1)
+				ft_putendl_fd("Error: munmap failed", 2);
+		}
+		else if (tmp == meta)
+		{
+			if (munmap((void*)meta, ALIGNPS(meta->size)) == -1)
+				ft_putendl_fd("Error: munmap failed", 2);
+			startaddr->large_start = NULL;
+		}
+		else
+			ft_putstr_fd("Error: large malloc error\n", 2);
 	}
 
 	/*

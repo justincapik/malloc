@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include "libft.h"
 #include <stdbool.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 # define PAGE_SIZE (size_t)getpagesize()
 
@@ -19,6 +21,8 @@
 
 # define TINY_ZONE_SIZE ALIGNPS(TINY * 100)
 # define SMALL_ZONE_SIZE ALIGNPS(SMALL * 100)
+//# define TINY_ZONE_SIZE TINY * 4
+//# define SMALL_ZONE_SIZE SMALL * 4
 
 typedef struct metadata metadata;
 struct		metadata
