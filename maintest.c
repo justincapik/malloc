@@ -28,18 +28,22 @@ void            printaddr(void* p0) {
 int 	main(void)
 {
 	size_t	*test[COUNT];
-	/*
+
+	printf("sizeof size_t = %d\n", sizeof(size_t));
 
 	for (int i = 0; i < COUNT; ++i)
 	{
-		test[i] = (void *)malloc(100);
+		test[i] = (void *)malloc(128);
 	}
 
+	show_alloc_mem(false);
 	for (int i = 0; i < COUNT; ++i)	
 	{
-		*(test[i]) = 0xffffffffffff;
+		*(test[i]) = 0xffffffffffffffff;
 	}
+	show_alloc_mem(true);
 
+	/*
 	for (int j = 0; j < COUNT; ++j)
 	{
 		for (int i = j; i >= 0; --i)	
@@ -51,15 +55,13 @@ int 	main(void)
 		for (int i = j; i < COUNT; ++i)	
 			test[i] = (void*)malloc(100);
 	}
-	
-	for (int i = COUNT - 1; i >= 0; --i)	
-		free(test[i]);
 	*/
 
 	for (int i = 0; i < COUNT; ++i)
 	{
-		test[i] = (void *)malloc(10000000000000);
+		test[i] = (void *)malloc(1000000);
 	}
+	show_alloc_mem(false);
 	for (int i = COUNT - 1; i >= 0; --i)	
 		free(test[i]);
 

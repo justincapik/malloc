@@ -19,8 +19,8 @@
 # define TINY 128 // biggest size of a single variable ? NEED TO BE SMALLER THAN PAGESIZE
 # define SMALL 1024 // honestly kind of random
 
-# define TINY_ZONE_SIZE ALIGNPS(TINY * 100)
-# define SMALL_ZONE_SIZE ALIGNPS(SMALL * 100)
+# define TINY_ZONE_SIZE ALIGNPS(TINY * (100 + ALIGN16(sizeof(metadata))))
+# define SMALL_ZONE_SIZE ALIGNPS(SMALL * (100 + ALIGN16(sizeof(metadata))))
 //# define TINY_ZONE_SIZE TINY * 4
 //# define SMALL_ZONE_SIZE SMALL * 4
 
@@ -50,9 +50,9 @@ void	*realloc(void *ptr, size_t size);
 void	*calloc(size_t nmemb, size_t size);
 void	*reallocarray(void *ptr, size_t nmemb, size_t size);
 
-void	printaddr(void *p0); // TODO keep inly in show_alloc_mem() later
-void	printhex(size_t nbr); // TODO 
-void	show_alloc_mem(void);
+//void	printaddr(void *p0); // TODO keep inly in show_alloc_mem() later
+//void	printhex(size_t nbr); // TODO 
+void	show_alloc_mem(bool showmem);
 
 extern	startaddrs_t	*startaddr;
 // can and will be pointing to any zone, but it will be the right values
