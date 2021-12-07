@@ -1,5 +1,5 @@
 #include "libft_malloc.h"
-#include "libft.h"
+//#include "libft.h"
 
 static void     write_char(char c)
 {
@@ -23,25 +23,24 @@ void            printaddr(void* p0) {
     }
 }
 
-# define COUNT 10
+# define COUNT 1024
 
 int 	main(void)
 {
 	size_t	*test[COUNT];
 
-	printf("sizeof size_t = %d\n", sizeof(size_t));
+	//printf("sizeof size_t = %lu\n", sizeof(size_t));
 
 	for (int i = 0; i < COUNT; ++i)
 	{
-		test[i] = (void *)malloc(128);
+		test[i] = (void *)malloc(1024);
 	}
 
-	show_alloc_mem(false);
 	for (int i = 0; i < COUNT; ++i)	
 	{
 		*(test[i]) = 0xffffffffffffffff;
 	}
-	show_alloc_mem(true);
+	show_alloc_mem();
 
 	/*
 	for (int j = 0; j < COUNT; ++j)
@@ -57,6 +56,7 @@ int 	main(void)
 	}
 	*/
 
+	/*
 	for (int i = 0; i < COUNT; ++i)
 	{
 		test[i] = (void *)malloc(1000000);
@@ -64,6 +64,7 @@ int 	main(void)
 	show_alloc_mem(false);
 	for (int i = COUNT - 1; i >= 0; --i)	
 		free(test[i]);
+	*/
 
 	/*
 	//printf("pagesize = %d\n", PAGE_SIZE);

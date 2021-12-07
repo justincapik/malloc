@@ -103,7 +103,6 @@ static void	*placeinmemory(long int size, void *heap_start)
 			>= ALIGN16(size) + ALIGN16(sizeof(metadata))))
 		&& (cur->next != heap_start
 			&& (void*)cur->next - cur->next->zonest == (void*)cur - cur->zonest))))
-		// WTF THIS CONDITION TODO
 	{
 		prev = cur;
 		cur = cur->next;
@@ -185,7 +184,7 @@ void	*malloc(size_t size)
 	   ft_putstr_fd("\n", 2);
 	*/
 
-	if (size == 0) // TODO if they ask too much too
+	if (size == 0)
 		return (NULL);
 	if (check_size(size) == false)
 	{
@@ -243,7 +242,7 @@ void	*malloc(size_t size)
 		*/
 	}
 
-	//show_alloc_mem();
+	//show_alloc_mem(false);
 
 	return (data_ptr);
 }

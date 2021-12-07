@@ -210,12 +210,5 @@ void		free(void *ptr)
 			ft_putstr_fd("Error: large malloc error\n", 2);
 	}
 
-	/*
-	   if (munmap(ptr, PAGE_SIZE) == -1)
-	   write(2, "fuck i guess\n", 13);
-	   else
-	   write(2, "freed\n", 6);
-	 */
-	//show_alloc_mem(false);
-
+	//show_alloc_mem();
 }

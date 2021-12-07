@@ -12,7 +12,7 @@ static char	hex_digit(int v) {
 		return 'a' + v - 10; // <-- Here
 }
 
-static void		printaddr(void* p0) {
+void		printaddr(void* p0) {
 	int i;
 	size_t p = (size_t)p0;
 
@@ -72,7 +72,7 @@ static void	ft_putnbr_base(size_t nbr, char *base)
 	}
 }
 
-static void		printhex(void* nbr)
+void		printhex(void* nbr)
 {
 	size_t	nb = (size_t)nbr;
 	ft_putstr_fd("0x", 2);
@@ -131,7 +131,7 @@ static size_t	print_zone(int fd, bool showmem, startaddrs_t *stsa)
 				++mem;
 				ft_putstr_fd(" ", fd);
 				if ((i + 1) % 16 == 0 && i != meta->size - 1)
-					ft_putstr_fd("\n\t\t\t\t\t", fd);
+					ft_putstr_fd("\n\t\t\t\t\t\t", fd);
 			}
 		}
 		ft_putstr_fd("\n", fd);
@@ -178,7 +178,7 @@ static size_t	print_large(int fd, bool showmem, metadata *meta)
 				++mem;
 				ft_putstr_fd(" ", fd);
 				if ((i + 1) % 16 == 0)
-					ft_putstr_fd("\n\t\t\t\t\t", fd);
+					ft_putstr_fd("\n\t\t\t\t\t\t", fd);
 			}
 		}
 		ft_putstr_fd("\n", fd);
@@ -187,7 +187,7 @@ static size_t	print_large(int fd, bool showmem, metadata *meta)
 	return (totalmem);
 }
 
-void		show_alloc_mem(bool showmem)
+static void		print_mem(bool showmem)
 {
 	int fd = 2;
 	size_t totalmem = 0;
@@ -236,4 +236,14 @@ void		show_alloc_mem(bool showmem)
 	ft_putnbr_fd(totalmem, 2);
 	ft_putstr_fd(" bytes\n", 2);
 	ft_putstr_fd("[========================End Print Memory=====================]\n", fd);
+}
+
+void		show_alloc_mem()
+{
+	print_mem(false);
+}
+
+void		show_alloc_mem_dump()
+{
+	print_mem(true);
 }

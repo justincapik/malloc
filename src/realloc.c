@@ -55,17 +55,34 @@ void	*realloc(void *ptr, size_t size)
 	}
 	else if (check_ptr(ptr) == false)
 	{
-                ft_putstr_fd("Error: invalide pointer given to free\n", 2);
+                ft_putstr_fd("Error: invalide pointer given to realloc\n", 2);
                 return (NULL);
 	}
-	//  MAC IS DIFFERENT HERE TODO
 	else if (ptr != NULL && size == 0)
 	{
 		free(ptr);
-		data_ptr = NULL;
+		data_ptr = malloc(TINY);
 	}
 	else if (size <= meta->size)
+	/*
+			|| ((void*)meta->next - (void*)meta - ALIGN16(sizeof(metadata)) < size
+			&& (meta->next->zonest != ALIGN16(sizeof(startaddrs_t))
+				&& meta->next->zonest != 0)))
+	*/
 	{
+		/*
+			if ((void*)meta->next - (void*)meta - ALIGN16(sizeof(metadata)) < size
+			&& (meta->next->zonest != ALIGN16(sizeof(startaddrs_t))
+				&& meta->next->zonest != 0))
+			{
+				ft_putstr_fd("CAUGHT\n", 2);
+				printaddr(meta);
+				write(2, "\n", 1);
+				printaddr(meta->next);
+				write(2, "\n", 1);
+				printhex(
+			}
+			*/
 		meta->size = size;
 		data_ptr = ptr;
 	}
