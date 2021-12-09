@@ -57,7 +57,7 @@ static void		delete_zone(startaddrs_t *sa, metadata *cur)
 		}
 	
 		tmp->next = sa->next;
-		if (munmap((void*)sa, size) == -1)
+		if (munmap((void*)sa, size) == -1 && DEBUG == 1)
 			ft_putendl_fd("Error: munmap failed", 2);
 	}
 }
@@ -99,30 +99,26 @@ static bool		check_ptr(void *ptr)
 
 void		free(void *ptr)
 {
-	/*
-	ft_putstr_fd("freeing at ", 2);
-	printaddr(ptr);
-	ft_putstr_fd("\n", 2);
-	*/
-
+	if (DEBUG == 1)
+	{
+		ft_putstr_fd("Free: freeing at ", 2);
+		printaddr(ptr);
+		ft_putstr_fd("\n", 2);
+	}
 	if (ptr == NULL)
 		return ;
 	if (check_ptr(ptr) == false)
 	{
-		/*
-		show_alloc_mem(false);
-		ft_putstr_fd("freeing at ", 2);
-		printaddr(ptr);
-		ft_putstr_fd("\n", 2);
-		*/
-		ft_putstr_fd("Error: invalide pointer given to free\n", 2);
+		if (DEBUG == 1)
+			ft_putstr_fd("Error: invalide pointer given to free\n", 2);
 		return ;
 	}
 	
 	metadata *meta = (void*)ptr - ALIGN16(sizeof(metadata));
 	if (meta->size == 0 && meta->next == NULL) // never actually used
 	{
-		ft_putstr_fd("Warning: double free\n", 2);
+		if (DEBUG == 1)
+			ft_putstr_fd("Warning: double free\n", 2);
 		return ;
 	}
 
@@ -197,16 +193,16 @@ void		free(void *ptr)
 		if (tmp->next == meta)
 		{
 			tmp->next = meta->next;
-			if (munmap((void*)meta, ALIGNPS(meta->size)) == -1)
+			if (munmap((void*)meta, ALIGNPS(meta->size)) == -1 && DEBUG == 1)
 				ft_putendl_fd("Error: munmap failed", 2);
 		}
 		else if (tmp == meta)
 		{
-			if (munmap((void*)meta, ALIGNPS(meta->size)) == -1)
+			if (munmap((void*)meta, ALIGNPS(meta->size)) == -1 && DEBUG == 1)
 				ft_putendl_fd("Error: munmap failed", 2);
 			startaddr->large_start = NULL;
 		}
-		else
+		else if (DEBUG == 1)
 			ft_putstr_fd("Error: large malloc error\n", 2);
 	}
 

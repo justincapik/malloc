@@ -114,10 +114,7 @@ static size_t	print_zone(int fd, bool showmem, startaddrs_t *stsa)
 		if (showmem == true)
 		{
 			ft_putstr_fd(":", fd);
-			if (meta->size >= 100)
-				ft_putstr_fd("\t", fd);
-			else	
-				ft_putstr_fd("\t\t", fd);
+			ft_putstr_fd("\t\t", fd);
 			char	*mem = (void*)meta + ALIGN16(sizeof(metadata));
 			for(size_t i = 0; i < meta->size; ++i)
 			{
@@ -161,10 +158,7 @@ static size_t	print_large(int fd, bool showmem, metadata *meta)
 		if (showmem == true)
 		{
 			ft_putstr_fd(":", fd);
-			if (meta->size >= 100)
-				ft_putstr_fd("\t", fd);
-			else	
-				ft_putstr_fd("\t\t", fd);
+			ft_putstr_fd("\t\t", fd);
 			char	*mem = (void*)meta + ALIGN16(sizeof(metadata));
 			for(size_t i = 0; i < meta->size; ++i)
 			{
@@ -243,7 +237,7 @@ void		show_alloc_mem()
 	print_mem(false);
 }
 
-void		show_alloc_mem_dump()
+void		show_alloc_mem_ex()
 {
 	print_mem(true);
 }

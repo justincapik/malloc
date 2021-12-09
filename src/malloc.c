@@ -8,12 +8,21 @@ static void	*updatestartaddr()
 	if ((tiny = mmap(NULL, TINY_ZONE_SIZE, PROT_READ
 					| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
 					| MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+	{
+		if (DEBUG == 1)
+			ft_putstr_fd("Error: mmap failed\n", 2);
 		return (NULL);
+	}
 	if ((small = mmap(NULL, SMALL_ZONE_SIZE, PROT_READ
 					| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
 					| MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+	{
+		if (DEBUG == 1)
+			ft_putstr_fd("Error: mmap failed\n", 2);
+		if (munmap(tiny, TINY_ZONE_SIZE) == -1 && DEBUG == 1)
+				ft_putendl_fd("Error: munmap failed", 2);
 		return (NULL);
-
+	}
 	// intialize tiny
 	startaddr = tiny;
 	startaddrs_t	*sa = tiny;
@@ -23,12 +32,12 @@ static void	*updatestartaddr()
 	sa->large_start = NULL;
 	sa->next = sa;
 	sa->first = sa->tiny_start;
-	
+
 	metadata        *md = sa->tiny_start;
 	md->next = sa->tiny_start;
 	md->size = 0;
 	md->zonest = ALIGN16(sizeof(startaddrs_t));
-	
+
 	// intialize small
 	sa = small;
 
@@ -37,7 +46,7 @@ static void	*updatestartaddr()
 	sa->large_start = NULL;
 	sa->next = sa;
 	sa->first = sa->small_start;
-	
+
 	md = sa->small_start;
 	md->next = sa->small_start;
 	md->size = 0;
@@ -55,7 +64,11 @@ static void	*create_new_zone(int size, void *heap_start, metadata *prev)
 	if ((start = mmap(NULL, zonesize, PROT_READ
 					| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
 					| MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+	{
+		if (DEBUG == 1)
+			ft_putstr_fd("Error: mmap failed\n", 2);
 		return (NULL);
+	}
 	startaddrs_t *sa = start;
 
 	sa->tiny_start = startaddr->tiny_start;
@@ -98,11 +111,11 @@ static void	*placeinmemory(long int size, void *heap_start)
 	}
 	//there's always the global vairable at the start of zones
 	while (!(cur->next == heap_start
-			|| ((((void*)cur->next - (void*)cur
-				- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size)
-			>= ALIGN16(size) + ALIGN16(sizeof(metadata))))
-		&& (cur->next != heap_start
-			&& (void*)cur->next - cur->next->zonest == (void*)cur - cur->zonest))))
+				|| ((((void*)cur->next - (void*)cur
+							- ALIGN16(sizeof(metadata)) - ALIGN16(cur->size)
+							>= ALIGN16(size) + ALIGN16(sizeof(metadata))))
+					&& (cur->next != heap_start
+						&& (void*)cur->next - cur->next->zonest == (void*)cur - cur->zonest))))
 	{
 		prev = cur;
 		cur = cur->next;
@@ -111,10 +124,10 @@ static void	*placeinmemory(long int size, void *heap_start)
 	if (cur->next == heap_start) //  on est arrive a la fin
 	{
 		if ((heap_start == startaddr->tiny_start
-			&& cur->zonest + ALIGN16(cur->size) + ALIGN16(sizeof(metadata))*2 + size
+					&& cur->zonest + ALIGN16(cur->size) + ALIGN16(sizeof(metadata))*2 + size
 					>= TINY_ZONE_SIZE)
 				|| (heap_start == startaddr->small_start
-			&& cur->zonest + ALIGN16(cur->size) + ALIGN16(sizeof(metadata))*2 + size
+					&& cur->zonest + ALIGN16(cur->size) + ALIGN16(sizeof(metadata))*2 + size
 					>= SMALL_ZONE_SIZE))
 			// on va depasser la page memoire et il faut en appeller une autre
 		{
@@ -161,14 +174,10 @@ static void	*placeinmemory(long int size, void *heap_start)
 static bool	check_size(size_t size)
 {
 	struct rlimit lim;
-	
+
 	if (getrlimit(RLIMIT_DATA, &lim) != 0)
 		return (false);
-	if (size > lim.rlim_cur)
-		return (false);
-	if (getrlimit(RLIMIT_AS, &lim) != 0)
-		return (false);
-	if (size > lim.rlim_cur)
+	if (size > lim.rlim_cur || size > lim.rlim_max)
 		return (false);
 	return (true);
 }
@@ -178,17 +187,19 @@ void	*malloc(size_t size)
 {
 	void	*data_ptr = NULL;
 
-	/*
-	   ft_putstr_fd("size => ", 2);
-	   ft_putnbr_fd(size, 2);
-	   ft_putstr_fd("\n", 2);
-	*/
+	if (DEBUG == 1)
+	{	
+		ft_putstr_fd("Malloc: size asked of [", 2);
+		ft_putnbr_fd(size, 2);
+		ft_putstr_fd("]\n", 2);
+	}
 
 	if (size == 0)
 		return (NULL);
 	if (check_size(size) == false)
 	{
-		ft_putstr_fd("Error: invalide size\n", 2);
+		if (DEBUG == 1)
+			ft_putstr_fd("Error: invalide size\n", 2);
 		return (NULL);
 	}	
 	if (startaddr == NULL)
@@ -197,33 +208,39 @@ void	*malloc(size_t size)
 	if (size <= TINY)
 	{
 		data_ptr = placeinmemory(size, startaddr->tiny_start);
-		/*
-		   ft_putstr_fd("TINY ADDED (", 2);
-		   printaddr(data_ptr);
-		   ft_putstr_fd(")\n", 2);
-		*/
+		if (DEBUG == 1)
+		{
+			ft_putstr_fd("Malloc: tiny added (", 2);
+			printaddr(data_ptr);
+			ft_putstr_fd(")\n", 2);
+		}
 	}
 	else if (size <= SMALL)
 	{
 		data_ptr = placeinmemory(size, startaddr->small_start);
-		/*
-		   ft_putstr_fd("SMALL ADDED (", 2);
-		   printaddr(data_ptr);
-		   ft_putstr_fd(")\n", 2);
-		*/
+		if (DEBUG == 1)
+		{
+			ft_putstr_fd("Malloc: small added (", 2);
+			printaddr(data_ptr);
+			ft_putstr_fd(")\n", 2);
+		}
 	}
 	else // LARGE
 	{
 		size_t memsize = (size_t)size + ALIGN16(sizeof(metadata));
 		if ((data_ptr = mmap(NULL, ALIGNPS(memsize),
-					PROT_READ | PROT_WRITE | PROT_EXEC,
-					MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+						PROT_READ | PROT_WRITE | PROT_EXEC,
+						MAP_ANONYMOUS | MAP_PRIVATE, -1, 0)) == MAP_FAILED)
+		{
+			if (DEBUG == 1)
+				ft_putstr_fd("Error: mmap failed\n", 2);
 			return (NULL);
+		}
 		metadata *meta = data_ptr;
 		meta->size = size;
 		meta->zonest = 0;
 		meta->next = NULL;
-		
+
 		if (startaddr->large_start == NULL)
 			startaddr->large_start = meta;
 		else
@@ -233,13 +250,14 @@ void	*malloc(size_t size)
 				tmp = tmp->next;
 			tmp->next = meta;
 		}
-		
+
 		data_ptr += ALIGN16(sizeof(metadata));
-		/*
-		   ft_putstr_fd("LARGE ADDED (", 2);
-		   printaddr(data_ptr);
-		   ft_putstr_fd(")\n", 2);
-		*/
+		if (DEBUG == 1)
+		{
+			ft_putstr_fd("Malloc: large added (", 2);
+			printaddr(data_ptr);
+			ft_putstr_fd(")\n", 2);
+		}
 	}
 
 	//show_alloc_mem(false);

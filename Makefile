@@ -6,11 +6,15 @@
 #    By: jucapik <marvin@42.fr>                     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/01/04 13:09:58 by jucapik           #+#    #+#              #
-#    Updated: 2019/05/07 11:33:49 by jucapik          ###   ########.fr        #
+#    Updated: 2021/12/09 14:51:31 by jucapik          ###   ########.fr        #
 #                                                                              #
 #******************************************************************************#
 
-NAME		=	libft_malloc_$(shell hostname).so
+ifeq ($(HOSTTYPE),)
+	HOSTTYPE := $(shell uname -m)_$(shell uname -s)
+endif
+
+NAME		=	libft_malloc_$(HOSTTYPE).so
 
 CC			=	gcc -g 
 

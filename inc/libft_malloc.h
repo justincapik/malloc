@@ -12,6 +12,8 @@
 
 # define PAGE_SIZE (size_t)getpagesize()
 
+# define DEBUG 1 // 1 if debugging, 0 if not
+
 # define ALIGN16(x) ((x + 15) & ~15) // 15 pour le 01111
 # define ALIGNPS(x) ((x + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1))
 	// only works if pagesize is a power of 2
@@ -29,7 +31,6 @@ struct		metadata
 {
 	metadata	*next; // wraps around to the start
 	size_t		size; // if equal to zero means it's free
-			      // check size with cur->next - cur
 	size_t		zonest;
 }; 
 
@@ -53,7 +54,7 @@ void	*reallocarray(void *ptr, size_t nmemb, size_t size);
 void	printaddr(void *p0); // TODO keep inly in show_alloc_mem() later
 void	printhex(void *nbr); // TODO 
 void	show_alloc_mem(void);
-void	show_alloc_mem_dump(void);
+void	show_alloc_mem_ex(void);
 
 extern	startaddrs_t	*startaddr;
 
