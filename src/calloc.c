@@ -13,8 +13,17 @@ void	*calloc(size_t nmemb, size_t size)
 	}
 	void	*data_ptr = NULL;
 
+	int x = nmemb * size;
+	if (nmemb != 0 && x / nmemb != size) {
+		// overflow handling
+		return (NULL);
+	}
+
 	data_ptr = malloc(nmemb * size);
 	if (data_ptr != NULL)
 		ft_bzero(data_ptr, nmemb * size);
+
+	// show_alloc_mem_ex();
+
 	return (data_ptr);
 }

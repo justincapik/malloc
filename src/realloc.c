@@ -1,5 +1,11 @@
 #include "libft_malloc.h"
 
+static void		printaddr(void* p0) {
+	size_t	nb = (size_t)p0;
+	ft_putstr_fd("0x", 2);
+	ft_putnbr_base_fd(nb, "0123456789abcdef", 2);
+}
+
 static bool            check_ptr(void *ptr)
 {
 	startaddrs_t    *sa = startaddr->tiny_start - ALIGN16(sizeof(startaddrs_t));
@@ -62,28 +68,11 @@ void	*realloc(void *ptr, size_t size)
 	else if (ptr != NULL && size == 0)
 	{
 		free(ptr);
-		data_ptr = malloc(TINY);
+		// data_ptr = malloc(TINY);
+		data_ptr = NULL;
 	}
 	else if (size <= meta->size)
-		/*
-		   || ((void*)meta->next - (void*)meta - ALIGN16(sizeof(metadata)) < size
-		   && (meta->next->zonest != ALIGN16(sizeof(startaddrs_t))
-		   && meta->next->zonest != 0)))
-		   */
 	{
-		/*
-		   if ((void*)meta->next - (void*)meta - ALIGN16(sizeof(metadata)) < size
-		   && (meta->next->zonest != ALIGN16(sizeof(startaddrs_t))
-		   && meta->next->zonest != 0))
-		   {
-		   ft_putstr_fd("CAUGHT\n", 2);
-		   printaddr(meta);
-		   write(2, "\n", 1);
-		   printaddr(meta->next);
-		   write(2, "\n", 1);
-		   printhex(
-		   }
-		   */
 		meta->size = size;
 		data_ptr = ptr;
 	}
@@ -93,6 +82,8 @@ void	*realloc(void *ptr, size_t size)
 		ft_memcpy(data_ptr, ptr, meta->size);
 		free(ptr);
 	}
+	
+	// show_alloc_mem();
 
 	return (data_ptr);
 }

@@ -1,0 +1,3 @@
+** uncomment show_alloc_mem() in realloc.c **
+
+sh runlinux.sh ls -lRa / 2> >(grep -B60 "End Print") > /dev/null

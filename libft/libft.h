@@ -82,6 +82,7 @@ void			ft_putchar_fd(char c, int fd);
 void			ft_putstr_fd(char const *s, int fd);
 void			ft_putendl_fd(char const *s, int fd);
 void			ft_putnbr_fd(int n, int fd);
+void			ft_putnbr_base_fd(size_t nbr, char *base, int fd);
 void			ft_putnstr(char *str, size_t n);
 void			ft_strdel(char **as);
 t_list			*ft_lstnew(void const *content, size_t content_size);

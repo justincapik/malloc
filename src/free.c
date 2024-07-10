@@ -1,5 +1,11 @@
 #include "libft_malloc.h"
 
+static void		printaddr(void* p0) {
+	size_t	nb = (size_t)p0;
+	ft_putstr_fd("0x", 2);
+	ft_putnbr_base_fd(nb, "0123456789abcdef", 2);
+}
+
 static void		delete_zone(startaddrs_t *sa, metadata *cur)
 {
 	startaddrs_t	*tmp = sa->next;
@@ -110,7 +116,7 @@ void		free(void *ptr)
 	if (check_ptr(ptr) == false)
 	{
 		if (DEBUG == 1)
-			ft_putstr_fd("Error: invalide pointer given to free\n", 2);
+			ft_putstr_fd("Error: invalid pointer given to free\n", 2);
 		return ;
 	}
 	
@@ -206,5 +212,5 @@ void		free(void *ptr)
 			ft_putstr_fd("Error: large malloc error\n", 2);
 	}
 
-	//show_alloc_mem();
+	// show_alloc_mem();
 }

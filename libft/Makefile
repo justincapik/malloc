@@ -32,7 +32,7 @@ SRCS	=		ft_memalloc.c ft_bzero.c ft_memmove.c ft_memcpy.c \
 				ft_strlen_s.c ft_strcpy_s.c ft_memccpy_s.c ft_memset_s.c \
 				ft_lstaddend.c ft_strndup.c ft_abs.c get_next_line.c \
 				ft_strnjoin.c ft_lstsize.c ft_strinsert.c ft_pow.c \
-				ft_putnstr.c
+				ft_putnstr.c ft_putnbr_base_fd.c
 
 BNRY	= $(SRCS:.c=.o)
 

@@ -10,11 +10,22 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#if __APPLE__
 # define PAGE_SIZE (size_t)getpagesize()
+#elif __ANDROID__ || __linux__ || __unix__ || defined(_POSIX_VERSION)
+# define PAGE_SIZE (size_t)sysconf(_SC_PAGESIZE)
+#else
+#   error "Unknown compiler"
+#endif
 
-# define DEBUG 1 // 1 if debugging, 0 if not
+
+
+
+
+# define DEBUG 0 // 1 if debugging, 0 if not
 
 # define ALIGN16(x) ((x + 15) & ~15) // 15 pour le 01111
+// # define ALIGN16(x) x // 15 pour le 01111
 # define ALIGNPS(x) ((x + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1))
 	// only works if pagesize is a power of 2
 
@@ -51,8 +62,6 @@ void	*realloc(void *ptr, size_t size);
 void	*calloc(size_t nmemb, size_t size);
 void	*reallocarray(void *ptr, size_t nmemb, size_t size);
 
-void	printaddr(void *p0); // TODO keep inly in show_alloc_mem() later
-void	printhex(void *nbr); // TODO 
 void	show_alloc_mem(void);
 void	show_alloc_mem_ex(void);
 

@@ -1,5 +1,11 @@
 #include "libft_malloc.h"
 
+static void		printaddr(void* p0) {
+	size_t	nb = (size_t)p0;
+	ft_putstr_fd("0x", 2);
+	ft_putnbr_base_fd(nb, "0123456789abcdef", 2);
+}
+
 static void	*updatestartaddr()
 {
 	void *tiny = NULL;
@@ -60,6 +66,8 @@ static void	*create_new_zone(int size, void *heap_start, metadata *prev)
 	void	*start = NULL;
 	size_t	zonesize = (heap_start == startaddr->tiny_start)
 		? TINY_ZONE_SIZE : SMALL_ZONE_SIZE;
+	// (void)heap_start;
+	// size_t zonesize = PAGE_SIZE;
 
 	if ((start = mmap(NULL, zonesize, PROT_READ
 					| PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS
@@ -205,7 +213,7 @@ void	*malloc(size_t size)
 	if (startaddr == NULL)
 		updatestartaddr();
 
-	if (size <= TINY)
+	if (size <= (size_t)TINY)
 	{
 		data_ptr = placeinmemory(size, startaddr->tiny_start);
 		if (DEBUG == 1)
@@ -260,7 +268,7 @@ void	*malloc(size_t size)
 		}
 	}
 
-	//show_alloc_mem(false);
+	// show_alloc_mem();
 
 	return (data_ptr);
 }
