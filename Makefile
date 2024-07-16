@@ -15,6 +15,7 @@ ifeq ($(HOSTTYPE),)
 endif
 
 NAME		=	libft_malloc_$(HOSTTYPE).so
+SHRT_NAME	=	libft_malloc.so
 
 CC			=	gcc
 
@@ -79,7 +80,10 @@ $(OBJ_PATH)/%.o:	%.c $(IDEP)
 	$(CC) -c $< -o $@ $(CFLAGS) $(IFLAGS) -fPIC
 
 
-all:		$(NAME)
+all:		$(NAME) $(SHRT_NAME)
+
+$(SHRT_NAME):
+	ln -s $(NAME) $(SHRT_NAME)
 
 $(NAME):	$(OBJ_PATH) $(OBJS)
 	cd $(LIBPATH) && $(MAKE)
@@ -91,6 +95,7 @@ clean:
 
 fclean: clean
 	make fclean -C $(LIBFT_PATH)
+	rm -rf $(SHRT_NAME)
 	rm -rf $(NAME)
 
 $(OBJ_PATH):
